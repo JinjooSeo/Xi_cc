@@ -256,8 +256,9 @@ AliGenCocktail *Generator(){
     AliGenerator *py = GeneratorPythia8();
     if(addPYTHIAevent) gen->AddGenerator(py,"PYTHIA",1.);
 
-    AliGenParam *omegaccc = new AliGenParam(1000, new AliGenITSULib(), 4444, "DIST");//4332, "DIST");//4444, "DIST");
-    AliTPythia8* pythia8 = AliTPythia8::Instance();
+    AliGenParam *omegaccc = new AliGenParam(1000, new AliGenITSULib(), 4422, "DIST");//4332, "DIST");//4444, "DIST");
+    //AliGenParam *omegaccc = new AliGenParam(1000, 4422);//4332, "DIST");//4444, "DIST");
+		AliTPythia8* pythia8 = AliTPythia8::Instance();
    /* pythia8->ReadString("4444:onMode = off");
     pythia8->ReadString("4444:onIfAny = 4432");
 
@@ -366,11 +367,11 @@ AliGenerator*  GeneratorPythia8()
 void ForceMultiHFLS4Upgrade(AliTPythia8 *pythia8){
   //Xi_cc++ -> Xi_c+ pi+
   pythia8->ReadString("4422:oneChannel = 1 1 0 4232 211");
-  pythia8->ReadString("4444:onMode = off");
-  pythia8->ReadString("4444:onIfAll = 4232 211");
+  pythia8->ReadString("4422:onMode = off");
+  pythia8->ReadString("4422:onIfAll = 4232 211");
 
   //Xi_c+ -> p K- pi+
-  //pythia8->ReadString("4232:oneChannel = 1 1 0 3334 211");
+  //pythia8->ReadString("4232:oneChannel = 1 1 0 2212 321 211");
   pythia8->ReadString("4232:onMode = off");
   pythia8->ReadString("4232:onIfAll = 2212 321 211");
 
