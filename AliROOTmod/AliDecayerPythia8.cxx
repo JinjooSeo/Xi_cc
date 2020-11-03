@@ -866,7 +866,7 @@ void AliDecayerPythia8::ForceMultiHFLS4Upgrade()
   fPythia8->ReadString("4422:onIfAll = 4232 211");
 
   //Xi_c+ -> p K- pi+
-  fPythia8->ReadString("4232:oneChannel = 1 1 0 3334 211");
+  fPythia8->ReadString("4232:oneChannel = 1 1 0 2212 321 211");
   fPythia8->ReadString("4232:onMode = off");
   fPythia8->ReadString("4232:onIfAll = 2212 321 211");
 }
