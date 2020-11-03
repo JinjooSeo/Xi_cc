@@ -595,6 +595,10 @@ void AliDecayerPythia8::ForceDecay()
     case kHadronicDWithout4BodiesDsPhiPi:
       ForceHadronicD(0,0,0,0,1);
     break;
+
+    case kHFLS4Upgrade:
+		ForceMultiHFLS4Upgrade();
+    break;
       
     case kPhiKK:
 	// Phi-> K+ K-
@@ -838,7 +842,7 @@ void AliDecayerPythia8::ForceHadronicD(Int_t optUse4Bodies, Int_t optUseDtoV0, I
 void AliDecayerPythia8::ForceMultiHFLS4Upgrade()
 {
   //Omega_ccc^++ -> Omega_cc pi+
-  fPythia8->ReadString("4444:oneChannel = 1 1 0 4432 211");
+/*  fPythia8->ReadString("4444:oneChannel = 1 1 0 4432 211");
   fPythia8->ReadString("4444:onMode = off");
   fPythia8->ReadString("4444:onIfAll = 4432 211");
 
@@ -854,12 +858,12 @@ void AliDecayerPythia8::ForceMultiHFLS4Upgrade()
 
   //Omega -> Lambda K
   fPythia8->ReadString("3334:onMode = off");
-  fPythia8->ReadString("3334:onIfAny = 3122 321");
+  fPythia8->ReadString("3334:onIfAll = 3122 321");
 
   //Lambda -> p pi-
   fPythia8->ReadString("3122:onMode = off");
-  fPythia8->ReadString("3122:onIfAny = 2212 211");
-
+  fPythia8->ReadString("3122:onIfAll = 2212 211");
+*/
 //Xi_cc+ -> Xi_c+ pi+
   fPythia8->ReadString("4422:oneChannel = 1 1 0 4232 211");
   fPythia8->ReadString("4422:onMode = off");
