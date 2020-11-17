@@ -17,8 +17,6 @@
 
 /////////////////////////////////////////////////////////////
 //
-//
-//
 // \authors: Andrea Festanti
 // \email:   andrea.festanti@cern.ch
 //
@@ -76,9 +74,6 @@
 #include <TH3F.h>
 #include <TChain.h>
 
-#include "AliRecoDecayOmegac.h"
-#include "AliRecoDecayOmegacc.h"
-#include "AliRecoDecayOmegaccc.h"
 #include "AliPIDResponse.h"
 
 #include "AliAnalysisTaskSEXiccTopKpipi.h"
@@ -97,7 +92,6 @@ fMcEvent(0x0),
 fMcHandler(0x0),
 fStack(0x0),
 fEvent(0x0),
-fVertexerTracks(0x0),
 fBzkG(0.),
 fPrimVtx(0x0),
 fEtaCut(2.),
@@ -108,14 +102,19 @@ fOutputGen(0x0),
 fOutputReco(0x0),
 fITS(0x0),
 fPIDResponse(0),
-fProtonCandidates(1),
-fKaonCuts(2),
-fPionCuts(3),
-fSoftPionCuts(4),
+fKaonCuts(0),
+fPionCuts(0),
+fSoftPionCuts(0),
 fProtonTrackArray(0x0),
 fKaonTrackArray(0x0),
 fPionTrackArray(0x0),
-fSoftPionTrackArray(0x0)
+fSoftPionTrackArray(0x0),
+fhSparsePx(0x0),
+fhSparsePy(0x0),
+fhSparsePz(0x0),
+fhSparsePT(0x0),
+fhSparseY(0x0),
+fhSparseM(0x0)
 {
     /// Default constructor
 }
@@ -126,7 +125,6 @@ fMcEvent(0x0),
 fMcHandler(0x0),
 fStack(0x0),
 fEvent(0x0),
-fVertexerTracks(0x0),
 fBzkG(0.),
 fPrimVtx(0x0),
 fEtaCut(2.),
@@ -137,14 +135,19 @@ fOutputGen(0x0),
 fOutputReco(0x0),
 fITS(0x0),
 fPIDResponse(0),
-fProtonCandidates(1),
-fKaonCuts(2),
-fPionCuts(3),
-fSoftPionCuts(4),
+fKaonCuts(0),
+fPionCuts(0),
+fSoftPionCuts(0),
 fProtonTrackArray(0x0),
 fKaonTrackArray(0x0),
 fPionTrackArray(0x0),
-fSoftPionTrackArray(0x0)
+fSoftPionTrackArray(0x0),
+fhSparsePx(0x0),
+fhSparsePy(0x0),
+fhSparsePz(0x0),
+fhSparsePT(0x0),
+fhSparseY(0x0),
+fhSparseM(0x0)
 {
     /// Default constructor
 }
@@ -166,10 +169,6 @@ AliAnalysisTaskSEXiccTopKpipi::~AliAnalysisTaskSEXiccTopKpipi()
     if (fEvent){
         delete fEvent;
         fEvent = 0x0;
-    }
-    if (fVertexerTracks){
-        delete fVertexerTracks;
-        fVertexerTracks = 0x0;
     }
     if (fPrimVtx){
         delete fPrimVtx;
@@ -211,6 +210,30 @@ AliAnalysisTaskSEXiccTopKpipi::~AliAnalysisTaskSEXiccTopKpipi()
         delete fSoftPionTrackArray;
         fSoftPionTrackArray = 0x0;
     }
+    if (fhSparsePx){
+        delete fhSparsePx;
+        fhSparsePx = 0x0;
+    }
+    if (fhSparsePy){
+        delete fhSparsePy;
+        fhSparsePy = 0x0;
+    }
+    if (fhSparsePz){
+        delete fhSparsePz;
+        fhSparsePz = 0x0;
+    }
+    if (fhSparsePT){
+        delete fhSparsePT;
+        fhSparsePT = 0x0;
+    }
+    if (fhSparseM){
+        delete fhSparseM;
+        fhSparseM = 0x0;
+    }
+    if (fhSparseY){
+        delete fhSparseY;
+        fhSparseY = 0x0;
+    }
 }
 
 //________________________________________________________________________
@@ -236,13 +259,50 @@ void AliAnalysisTaskSEXiccTopKpipi::UserCreateOutputObjects()
     // create new ITS detector
     fITS = CreateDetector();
 
-    fVertexerTracks = new AliVertexerTracks();
-
     const char* nameoutput=GetOutputSlot(1)->GetContainer()->GetName();
+
+    fOutput = new TList();
+    fOutput->SetOwner();
+    fOutput->SetName("listOutput");
+
+    fProtonTrackArray = new TArrayI(10000);
+    fKaonTrackArray = new TArrayI(10000);
+    fPionTrackArray = new TArrayI(10000);
+    fSoftPionTrackArray = new TArrayI(10000);
+
+	fProtonCuts = 1;
+	fKaonCuts = 2;
+	fPionCuts = 3;
+	fSoftPionCuts = 4;
+
+    Int_t nbinsP[6]={40,40,40,40,40,40};
+    Double_t lowEdgesP[6]={0.,0.,0.,0.,0.,0.};
+    Double_t upEdgesP[6]={20.,20.,20.,20.,20.,20.};
+    fhSparsePx = new THnSparseF("fhSparsePx","fhSparsePx;px_proton:px_kaon:px_pion:px_spion:px_Xic:px_Xicc",6,nbinsP,lowEdgesP,upEdgesP);
+    fhSparsePy = new THnSparseF("fhSparsePy","fhSparsePy;py_proton:py_kaon:py_pion:py_spion:py_Xic:py_Xicc",6,nbinsP,lowEdgesP,upEdgesP);
+    fhSparsePz = new THnSparseF("fhSparsePz","fhSparsePz;pz_proton:pz_kaon:pz_pion:pz_spion:pz_Xic:pz_Xicc",6,nbinsP,lowEdgesP,upEdgesP);
+    fhSparsePT = new THnSparseF("fhSparsePT","fhSparsePT;pT_proton:pT_kaon:pT_pion:pT_spion:pT_Xic:pT_Xicc",6,nbinsP,lowEdgesP,upEdgesP);
+
+    Int_t nbinsM[6] = {120,120,120,120,120,120};
+    Double_t lowEdgesM[6] = {0.89,0.45,0.09,0.09,2.0,3.2};
+    Double_t upEdgesM[6] = {0.97,0.53,0.17,0.17,2.8,4.0};
+    fhSparseM = new THnSparseF("fhSparseM","fhSparseM;m_proton:m_kaon:m_pion:m_spion:m_Xic:m_Xicc",6,nbinsM,lowEdgesM,upEdgesM);
+
+    Int_t nbinsY[4] = {100,100,100,100};
+    Double_t lowEdgesY[4] = {-1.,-1,-1,-1};
+    Double_t upEdgesY[4] = {1,1,1,1};
+    fhSparseY = new THnSparseF("fhSparseY","fhSparseY;Y_proton:Y_kaon:Y_pion:Y_spion:Y_Xic:Y_Xicc",4,nbinsY,lowEdgesY,upEdgesY);
+
+    fOutput->Add(fhSparsePx);
+    fOutput->Add(fhSparsePy);
+    fOutput->Add(fhSparsePz);
+    fOutput->Add(fhSparsePT);
+    fOutput->Add(fhSparseM);
+    fOutput->Add(fhSparseY);
 
     // Post the data
     PostData(1,fNentries);
-    PostData(2,fNcounters);
+    PostData(2,fOutput);
 
     return;
 }
@@ -309,77 +369,96 @@ void AliAnalysisTaskSEXiccTopKpipi::Terminate(Option_t */*option*/)
 void AliAnalysisTaskSEXiccTopKpipi::MakeCandidates(){
 
   PrepareTracks();
-  for(Int_t i=0; i<nentr; i++){
-    fEsdTr1 = (AliESDtrack*)fEvent->GetTrack(i);
-    fIdxTrack1 = fEsdTr1->GetID();
-  }
 
+  for(int i=0; i<10000; i++){
+    if(!fProtonTrackArray->At(i)) continue;
+    AliESDtrack* fProtonTrack = (AliESDtrack*)fEvent->GetTrack(fProtonTrackArray->At(i));
 
+    for(int j=0; j<10000; j++){
+      if(!fKaonTrackArray->At(j)) continue;
+      AliESDtrack* fKaonTrack = (AliESDtrack*)fEvent->GetTrack(fKaonTrackArray->At(j));
+
+      if(fKaonTrack->Charge()*fProtonTrack->Charge()>=0) continue;
+      if(fKaonTrack->GetID()==fProtonTrack->GetID()) continue;
+
+      for(int k=0; k<10000; k++){
+        if(!fPionTrackArray->At(k)) continue;
+        AliESDtrack* fPionTrack = (AliESDtrack*)fEvent->GetTrack(fPionTrackArray->At(k));
+
+        if(fPionTrack->Charge()*fKaonTrack->Charge()>=0) continue;
+        if(fPionTrack->Charge()*fProtonTrack->Charge()<=0) continue;
+        if(fPionTrack->GetID()==fKaonTrack->GetID()) continue;
+        if(fPionTrack->GetID()==fProtonTrack->GetID()) continue;
+
+        for(int l=0; l<10000; l++){
+          if(!fSoftPionTrackArray->At(k)) continue;
+          AliESDtrack* fSoftPionTrack = (AliESDtrack*)fEvent->GetTrack(fSoftPionTrackArray->At(k));
+
+          if(fSoftPionTrack->Charge()*fProtonTrack->Charge()<=0) continue;
+          if(fSoftPionTrack->Charge()*fKaonTrack->Charge()>=0) continue;
+          if(fSoftPionTrack->Charge()*fPionTrack->Charge()<=0) continue;
+          if(fSoftPionTrack->GetID()==fKaonTrack->GetID()) continue;
+          if(fSoftPionTrack->GetID()==fProtonTrack->GetID()) continue;
+          if(fSoftPionTrack->GetID()==fPionTrack->GetID()) continue;
+
+          FillXiccHistogram(fProtonTrack,fKaonTrack,fPionTrack,fSoftPionTrack);
+          FillXiccTree(fProtonTrack,fKaonTrack,fPionTrack,fSoftPionTrack);
+        }//l
+      }//k
+    }//j
+  }//i
     return;
 }
 //________________________________________________________________________
 void AliAnalysisTaskSEXiccTopKpipi::PrepareTracks(){
-  AliESDTrack* trk;
-  AliESDTrack* fProtonCandidates;
-  AliESDTrack* fKaonCandidates;
-  AliESDTrack* fPionCandidates;
-  AliESDTrack* fSoftPionCandidates;
+  AliESDtrack* trk;
   Int_t nProton = 0; Int_t nKaon = 0; Int_t nPion = 0; Int_t nSoftPion = 0;
-
   Int_t nentr = (Int_t)fEvent->GetNumberOfTracks();
 
   for(Int_t i=0; i<nentr; i++){
     trk = (AliESDtrack*)fEvent->GetTrack(i);
     if(IsSelected(fProtonCuts,trk)) {
-      fProtonCandidates = trk;
-      nProton++;
       fProtonTrackArray->AddAt(i,nProton);
+      nProton++;
     }
     if(IsSelected(fKaonCuts,trk)) {
-      fKaonCandidates = trk;
-      nKaon++;
       fKaonTrackArray->AddAt(i,nKaon);
+      nKaon++;
     }
     if(IsSelected(fPionCuts,trk)) {
-      fPionCandidates = trk;
-      nPion++;
       fPionTrackArray->AddAt(i,nPion);
+      nPion++;
     }
     if(IsSelected(fSoftPionCuts,trk)) {
-      fSoftPionCandidates = trk;
-      nSoftPion++;
       fSoftPionTrackArray->AddAt(i,nSoftPion);
+      nSoftPion++;
     }
      //AddAt (Int_t c, Int_t i) : Add Int_t c at position i. Check for out of bounds.
   }
-
-  delete fProtonCandidates;
-  delete fKaonCandidates;
-  delete fPionCandidates;
-  delete fSoftPionCandidates;
 
   return;
 }
 
 //________________________________________________________________________
-Bool_t AliAnalysisTaskSEXiccTopKpipi::IsSelected(Int_t *CutFlag, AliESDTrack *trk){
+Bool_t AliAnalysisTaskSEXiccTopKpipi::IsSelected(Int_t CutFlag, AliESDtrack *trk){
 
   if(!trk) return kFALSE;
+  if(trk->Pt()<0.5) return kFALSE;
 
   if(CutFlag==1){ //Proton candidate
-    if(fPIDResponse->GetNumberOfSigmasTPC(trk,kProton)>4) return kFALSE;
+    if(fPIDResponse->GetNumberOfSigmasTPC(trk,AliPID::kProton)>4) return kFALSE;
     return kTRUE;
   }
   else if(CutFlag==2){ //Kaon candidate
-    if(fPIDResponse->GetNumberOfSigmasTPC(trk,kKaon)>4) return kFALSE;
+    if(fPIDResponse->GetNumberOfSigmasTPC(trk,AliPID::kKaon)>4) return kFALSE;
     return kTRUE;
   }
   else if(CutFlag==3){ //Pion candidate
-    if(fPIDResponse->GetNumberOfSigmasTPC(trk,kPion)>4) return kFALSE;
+    if(fPIDResponse->GetNumberOfSigmasTPC(trk,AliPID::kPion)>2) return kFALSE;  //to seperate pion and electron
     return kTRUE;
   }
   else if(CutFlag==4){ //Soft pion candidate
-    if(fPIDResponse->GetNumberOfSigmasTPC(trk,kPion)>4) return kFALSE;
+    if(fPIDResponse->GetNumberOfSigmasTPC(trk,AliPID::kPion)>2) return kFALSE;  //to seperate pion and electron
     return kTRUE;
   }
   else{
@@ -388,6 +467,86 @@ Bool_t AliAnalysisTaskSEXiccTopKpipi::IsSelected(Int_t *CutFlag, AliESDTrack *tr
   }
 }
 
+//________________________________________________________________________
+void AliAnalysisTaskSEXiccTopKpipi::FillXiccHistogram(AliESDtrack *proton, AliESDtrack *kaon, AliESDtrack *pion, AliESDtrack *softpion){
+
+  Double_t *PionP[3], *KaonP[3], *ProtonP[3], *SPionP[3];
+  proton->GetConstrainedPxPyPz(ProtonP);
+  kaon->GetConstrainedPxPyPz(KaonP);
+  pion->GetConstrainedPxPyPz(PionP);
+  softpion->GetConstrainedPxPyPz(SPionP);
+
+  Double_t px_proton = ProtonP[0];
+  Double_t py_proton = ProtonP[1];
+  Double_t pz_proton = ProtonP[2];
+  Double_t pT_proton = sqrt(pow(ProtonP[0],2)+pow(ProtonP[1],2));
+  Double_t px_kaon = KaonP[0];
+  Double_t py_kaon = KaonP[1];
+  Double_t pz_kaon = KaonP[2];
+  Double_t pT_kaon = sqrt(pow(KaonP[0],2)+pow(KaonP[1],2));
+  Double_t px_pion = PionP[0];
+  Double_t py_pion = PionP[1];
+  Double_t pz_pion = PionP[2];
+  Double_t pT_pion = sqrt(pow(PionP[0],2)+pow(PionP[1],2));
+  Double_t px_spion = SPionP[0];
+  Double_t py_spion = SPionP[1];
+  Double_t pz_spion = SPionP[2];
+  Double_t pT_spion = sqrt(pow(SPionP[0],2)+pow(SPionP[1],2));
+  Double_t m_proton = proton->M();
+  Double_t m_kaon = kaon->M();
+  Double_t m_pion = pion->M();
+  Double_t m_spion = softpion->M();
+  Double_t E_proton = proton->E();
+  Double_t E_kaon = kaon->E();
+  Double_t E_pion = pion->E();
+  Double_t E_spion = softpion->E();
+  Double_t Y_proton = proton->Y();
+  Double_t Y_kaon = kaon->Y();
+  Double_t Y_pion = pion->Y();
+  Double_t Y_spion = softpion->Y();
+
+  Double_t px_Xic = sqrt(pow(ProtonP[0]+KaonP[0]+PionP[0],2));
+  Double_t py_Xic = sqrt(pow(ProtonP[1]+KaonP[1]+PionP[1],2));
+  Double_t pz_Xic = sqrt(pow(ProtonP[2]+KaonP[2]+PionP[2],2));
+  Double_t pT_Xic = sqrt(pow(px_Xic,2)+pow(py_Xic,2));
+  Double_t E_Xic = sqrt(pow(px_Xic,2)+pow(py_Xic,2)+pow(pz_Xic,2)+2.46794*2.46794);
+  Double_t m_Xic = sqrt(pow(E_proton+E_kaon+E_pion,2)-pow(px_Xic,2)-pow(py_Xic,2)-pow(pz_Xic,2));
+
+  Double_t px_Xicc = sqrt(pow(px_Xic+SPionP[0],2));
+  Double_t py_Xicc = sqrt(pow(py_Xic+SPionP[1],2));
+  Double_t pz_Xicc = sqrt(pow(pz_Xic+SPionP[2],2));
+  Double_t pT_Xicc = sqrt(pow(px_Xicc,2)+pow(py_Xicc,2));
+  Double_t E_Xicc = sqrt(pow(px_Xicc,2)+pow(py_Xicc,2)+pow(pz_Xicc,2)+3.6212*3.6212);
+  Double_t m_Xicc = sqrt(pow(E_Xic+E_spion,2)-pow(px_Xicc,2)-pow(py_Xicc,2)-pow(pz_Xicc,2));
+
+  Double_t px_Merge[6] = {px_proton,px_kaon,px_pion,px_spion,px_Xic,px_Xicc}; fhSparsePx->Fill(px_Merge);
+  Double_t py_Merge[6] = {py_proton,py_kaon,py_pion,py_spion,py_Xic,py_Xicc}; fhSparsePy->Fill(py_Merge);
+  Double_t pz_Merge[6] = {pz_proton,pz_kaon,pz_pion,pz_spion,pz_Xic,pz_Xicc}; fhSparsePz->Fill(pz_Merge);
+  Double_t pT_Merge[6] = {pT_proton,pT_kaon,pT_pion,pT_spion,pT_Xic,pT_Xicc}; fhSparsePT->Fill(pT_Merge);
+  Double_t m_Merge[6] = {m_proton,m_kaon,m_pion,m_spion,m_Xic,m_Xicc}; fhSparseM->Fill(m_Merge);
+  Double_t Y_Merge[4] = {Y_proton,Y_kaon,Y_pion,Y_spion}; fhSparseY->Fill(Y_Merge);
+
+  return;
+}
+
+void AliAnalysisTaskSEXiccTopKpipi::DefineTree(){
+  fTree = new TTree("fTree","fTree");
+  vector <TString> fTreeVariableName = {"px_Xicc","py_Xicc","pz_Xicc","charge_Xicc","mass_Xicc","pT_Xicc",
+    "px_Xic","py_Xic","pz_Xic","charge_Xic","mass_Xic","pT_Xic",
+    "px_spion","py_spion","pz_spion","charge_spion","mass_spion","pT_spion",
+    "px_proton","py_proton","pz_proton","charge_proton","mass_proton","pT_proton",
+    "px_kaon","py_kaon","pz_kaon","charge_kaon","mass_kaon","pT_kaon",
+    "px_pion","py_pion","pz_pion","charge_pion","mass_pion","pT_pion",
+    "PA_spionXic","SecondaryVertex","DecayLengthXY","Chi2perNDF"};
+  fTreeVariable = new Float_t [fTreeVariableName.size()];
+
+  for (Int_t ivar=0; ivar<(Float_t)fTreeVariableName.size(); ivar++) fTree->Branch(fTreeVariableName[ivar].Data(),&fTreeVariable[ivar],Form("%s/f",fTreeVariableName[ivar].Data()));
+
+  return;
+}
+//________________________________________________________________________
+//________________________________________________________________________
+//________________________________________________________________________
 //________________________________________________________________________
 void AliAnalysisTaskSEXiccTopKpipi::RecoEvent(){
 

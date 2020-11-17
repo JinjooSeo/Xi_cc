@@ -38,9 +38,6 @@
 #include "AliStack.h"
 #include "AliMCEventHandler.h"
 #include "AliAnalysisTaskWeakDecayVertexer_mod.h"
-#include "AliRecoDecayOmegac.h"
-#include "AliRecoDecayOmegacc.h"
-#include "AliRecoDecayOmegaccc.h"
 #include "R5Detector.h"
 #include "AliPIDResponse.h"
 
@@ -73,7 +70,7 @@ public:
 
     void MakeCandidates();
     void PrepareTracks();
-    Bool_t IsSelected(Int_t *CutFlag, AliESDTrack *trk);
+    Bool_t IsSelected(Int_t CutFlag, AliESDtrack *trk);
     Bool_t FillHistoXic();
     Bool_t FillHistoXicc();
     AliESDVertex* CallReconstructSecondaryVertexXic(Double_t &dispersion);
@@ -92,6 +89,10 @@ public:
 
     void SetIsSignalProd(bool opt) {fIsMCSignalProd=opt;}
 
+    void FillXiccHistogram(AliESDtrack *proton, AliESDtrack *kaon, AliESDtrack *pion, AliESDtrack *softpion);
+    void FillXiccTree(AliESDtrack *proton, AliESDtrack *kaon, AliESDtrack *pion, AliESDtrack *softpion);
+    void DefineTree();
+
 
 private:
 
@@ -103,31 +104,42 @@ private:
     AliInputEventHandler    *fMcHandler;            //!<! MCEventHandler
     AliStack                *fStack;                //!<!
     AliESDEvent             *fEvent;                //!<!
-    AliVertexerTracks       *fVertexerTracks;       //!<!
     Float_t                 fBzkG;
     AliESDVertex            *fPrimVtx;              //!<!
     Float_t                 fEtaCut;
     Int_t                   fEvtCount;
     TH1F                    *fNentries;             //!<!   histogram with number of events on output slot 1
     TH1F                    *fNcounters;            //!<!   histogram with number of events, gen/filtered charmed baryons
+    TList                   *fOutput;            //!<!   list on output slot 2
     TList                   *fOutputGen;            //!<!   list on output slot 2
     TList                   *fOutputReco;           //!<!   list on output slot 2
     R5Detector              *fITS;                  //!<!
     AliPIDResponse          *fPIDResponse;
+	Bool_t fIsMCSignalProd;
 
-    Int_t                   *fProtonCandidates;
-    Int_t                   *fKaonCuts;
-    Int_t                   *fPionCuts;
-    Int_t                   *fSoftPionCuts;
+    Int_t                  fProtonCuts;
+    Int_t                  fKaonCuts;
+    Int_t                  fPionCuts;
+    Int_t                  fSoftPionCuts;
 
     TArrayI                 *fProtonTrackArray;
     TArrayI                 *fKaonTrackArray;
     TArrayI                 *fPionTrackArray;
     TArrayI                 *fSoftPionTrackArray;
 
+    TTree                   *fTree;
+    Float_t                 *fTreeVariable = nullptr; //!
+
+    THnSparseF              *fhSparsePx; //!
+    THnSparseF              *fhSparsePy; //!
+    THnSparseF              *fhSparsePz; //!
+    THnSparseF              *fhSparsePT; //!
+    THnSparseF              *fhSparseM; //!
+    THnSparseF              *fhSparseY; //!
+
 
     /// \cond CLASSIMP
-    ClassDef(AliAnalysisTaskSEOmegacccToOmega3Pi,1);
+    ClassDef(AliAnalysisTaskSEXiccTopKpipi,1);
     /// \endcond
 };
 
