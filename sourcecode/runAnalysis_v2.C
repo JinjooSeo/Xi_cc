@@ -10,7 +10,7 @@
 
 Bool_t runLocal=kTRUE;                                  // flag to run locally on AliAOD.root + AliAOD.VertexingHF.root
 //TString pathToLocalAODfiles="../Omega_ccc/input/bkg/";//"./analysis/background"; // ../input_files/bkg_Kr path to find AOD files when running locally
-TString pathToLocalAODfiles="../MCgen";
+TString pathToLocalAODfiles="../data";
 Bool_t runGridTest=kFALSE;                                // flag to run a grid test: kTRUE (+runLocal=kFALSE). To run job on GRID: runGridTest=kFALSE, runLocal=kFALSE
 TString runMode="full";                                  // sets the run grid mode: "full", "terminate"
 
@@ -301,8 +301,9 @@ void runAnalysis_v2()
     mc->SetReadTR(kFALSE);
     mgr->SetMCtruthEventHandler(mc);
 
-TMacro PIDadd(gSystem->ExpandPathName("$ALICE_ROOT/ANALYSIS/macros/AddTaskPIDResponse.C"));
-AliAnalysisTaskPIDResponse* PIDresponseTask = reinterpret_cast<AliAnalysisTaskPIDResponse*>(PIDadd.Exec());
+//TMacro PIDadd(gSystem->ExpandPathName("$ALICE_ROOT/ANALYSIS/macros/AddTaskPIDResponse.C"));
+
+//AliAnalysisTaskPIDResponse* PIDresponseTask = reinterpret_cast<AliAnalysisTaskPIDResponse*>(PIDadd.Exec());
 
 
     // compile the class and load the add task macro

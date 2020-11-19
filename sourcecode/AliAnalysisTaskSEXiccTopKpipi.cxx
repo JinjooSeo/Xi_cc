@@ -101,7 +101,6 @@ fNcounters(0x0),
 fOutputGen(0x0),
 fOutputReco(0x0),
 fITS(0x0),
-fPIDResponse(0),
 fKaonCuts(0),
 fPionCuts(0),
 fSoftPionCuts(0),
@@ -134,7 +133,6 @@ fNcounters(0x0),
 fOutputGen(0x0),
 fOutputReco(0x0),
 fITS(0x0),
-fPIDResponse(0),
 fKaonCuts(0),
 fPionCuts(0),
 fSoftPionCuts(0),
@@ -150,6 +148,11 @@ fhSparseY(0x0),
 fhSparseM(0x0)
 {
     /// Default constructor
+
+    DefineInput(0, TChain::Class());
+// Output slot #1 writes into a TH1F container (number of events)
+  DefineOutput(1,TH1F::Class());
+  DefineOutput(2,TList::Class());
 }
 //________________________________________________________________________
 AliAnalysisTaskSEXiccTopKpipi::~AliAnalysisTaskSEXiccTopKpipi()
@@ -261,6 +264,35 @@ void AliAnalysisTaskSEXiccTopKpipi::UserCreateOutputObjects()
 
     const char* nameoutput=GetOutputSlot(1)->GetContainer()->GetName();
 
+    fNentries=new TH1F(nameoutput, "Number of events", 23,-0.5,22.5);
+fNentries->GetXaxis()->SetBinLabel(1,"All gen events");
+fNentries->GetXaxis()->SetBinLabel(2,"All gen particle");
+fNentries->GetXaxis()->SetBinLabel(3,"Physical particle");
+fNentries->GetXaxis()->SetBinLabel(4,"Mother label not -1");
+fNentries->GetXaxis()->SetBinLabel(5,"Excluding charge=0");
+fNentries->GetXaxis()->SetBinLabel(6,"After Kine cuts");
+fNentries->GetXaxis()->SetBinLabel(7,"Reco tracks");
+fNentries->GetXaxis()->SetBinLabel(8,"Not Reco tracks");
+fNentries->GetXaxis()->SetBinLabel(9,"N #pi from #Lambda gen");
+fNentries->GetXaxis()->SetBinLabel(10,"N p from #Lambda gen");
+fNentries->GetXaxis()->SetBinLabel(11,"N #Lambda gen");
+fNentries->GetXaxis()->SetBinLabel(12,"N #Omega gen");
+fNentries->GetXaxis()->SetBinLabel(13,"N #Lambda from #Omega gen");
+fNentries->GetXaxis()->SetBinLabel(14,"N K from #Omega gen");
+fNentries->GetXaxis()->SetBinLabel(15,"N D gen");
+fNentries->GetXaxis()->SetBinLabel(16,"N B gen");
+
+fNcounters=new TH1F(nameoutput, "Counters used for normalization", 8,-0.5,7.5);
+fNcounters->GetXaxis()->SetBinLabel(1,"Gen events");
+fNcounters->GetXaxis()->SetBinLabel(2,"All gen particle");
+fNcounters->GetXaxis()->SetBinLabel(3,"Gen #Omega^{ccc}");
+fNcounters->GetXaxis()->SetBinLabel(4,"Reco #Omega^{ccc}");
+fNcounters->GetXaxis()->SetBinLabel(5,"Gen #Omega^{cc}");
+fNcounters->GetXaxis()->SetBinLabel(6,"Reco #Omega^{cc}");
+fNcounters->GetXaxis()->SetBinLabel(7,"Gen #Omega^{c}");
+fNcounters->GetXaxis()->SetBinLabel(8,"Reco #Omega^{c}");
+
+
     fOutput = new TList();
     fOutput->SetOwner();
     fOutput->SetName("listOutput");
@@ -326,6 +358,10 @@ void AliAnalysisTaskSEXiccTopKpipi::UserExec(Option_t */*option*/)
         Printf("ERROR: Could not retrieve MC event");
         return;
     }
+
+  //  AliInputEventHandler* inputHandler = (AliInputEventHandler*) AliAnalysisManager::GetAnalysisManager()->GetInputEventHandler();
+  //  fPIDResponse = (AliPIDResponse*) inputHandler->GetPIDResponse();
+//    if(!fPIDResponse) printf("AliAnalysisTaskSEXic0Semileptonic No PIDd\n");
 
     // create dummy vertex for beam diamond
     const double kBeamSig = 3e-4;//50e-4;
@@ -402,7 +438,7 @@ void AliAnalysisTaskSEXiccTopKpipi::MakeCandidates(){
           if(fSoftPionTrack->GetID()==fPionTrack->GetID()) continue;
 
           FillXiccHistogram(fProtonTrack,fKaonTrack,fPionTrack,fSoftPionTrack);
-          FillXiccTree(fProtonTrack,fKaonTrack,fPionTrack,fSoftPionTrack);
+          //FillXiccTree(fProtonTrack,fKaonTrack,fPionTrack,fSoftPionTrack);
         }//l
       }//k
     }//j
@@ -446,19 +482,19 @@ Bool_t AliAnalysisTaskSEXiccTopKpipi::IsSelected(Int_t CutFlag, AliESDtrack *trk
   if(trk->Pt()<0.5) return kFALSE;
 
   if(CutFlag==1){ //Proton candidate
-    if(fPIDResponse->GetNumberOfSigmasTPC(trk,AliPID::kProton)>4) return kFALSE;
+    //if(fPIDResponse->GetNumberOfSigmasTPC(trk,AliPID::kProton)>4) return kFALSE;
     return kTRUE;
   }
   else if(CutFlag==2){ //Kaon candidate
-    if(fPIDResponse->GetNumberOfSigmasTPC(trk,AliPID::kKaon)>4) return kFALSE;
+    //if(fPIDResponse->GetNumberOfSigmasTPC(trk,AliPID::kKaon)>4) return kFALSE;
     return kTRUE;
   }
   else if(CutFlag==3){ //Pion candidate
-    if(fPIDResponse->GetNumberOfSigmasTPC(trk,AliPID::kPion)>2) return kFALSE;  //to seperate pion and electron
+    //if(fPIDResponse->GetNumberOfSigmasTPC(trk,AliPID::kPion)>2) return kFALSE;  //to seperate pion and electron
     return kTRUE;
   }
   else if(CutFlag==4){ //Soft pion candidate
-    if(fPIDResponse->GetNumberOfSigmasTPC(trk,AliPID::kPion)>2) return kFALSE;  //to seperate pion and electron
+    //if(fPIDResponse->GetNumberOfSigmasTPC(trk,AliPID::kPion)>2) return kFALSE;  //to seperate pion and electron
     return kTRUE;
   }
   else{
@@ -470,7 +506,7 @@ Bool_t AliAnalysisTaskSEXiccTopKpipi::IsSelected(Int_t CutFlag, AliESDtrack *trk
 //________________________________________________________________________
 void AliAnalysisTaskSEXiccTopKpipi::FillXiccHistogram(AliESDtrack *proton, AliESDtrack *kaon, AliESDtrack *pion, AliESDtrack *softpion){
 
-  Double_t *PionP[3], *KaonP[3], *ProtonP[3], *SPionP[3];
+  Double_t *PionP, *KaonP, *ProtonP, *SPionP;
   proton->GetConstrainedPxPyPz(ProtonP);
   kaon->GetConstrainedPxPyPz(KaonP);
   pion->GetConstrainedPxPyPz(PionP);
@@ -718,7 +754,23 @@ void AliAnalysisTaskSEXiccTopKpipi::RecoEvent(){
 
 
 }
+//________________________________________________________________________
+TString AliAnalysisTaskSEXiccTopKpipi::GetGenerator(Int_t label, AliGenCocktailEventHeader* header){
 
+    Int_t nsumpart=0;
+    TList *lh = header->GetHeaders();
+    Int_t nh = lh->GetEntries();
+    for(Int_t i=0; i<nh; i++){
+        AliGenEventHeader *gh = (AliGenEventHeader*)lh->At(i);
+        TString genname = gh->GetName();
+        Int_t npart = gh->NProduced();
+        if(label>=nsumpart && label<(nsumpart+npart)) return genname;
+        nsumpart+=npart;
+    }
+    TString empty="";
+    return empty;
+
+}
 //________________________________________________________________________
 R5Detector* AliAnalysisTaskSEXiccTopKpipi::CreateDetector(){
 

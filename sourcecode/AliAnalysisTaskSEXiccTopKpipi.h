@@ -114,8 +114,12 @@ private:
     TList                   *fOutputGen;            //!<!   list on output slot 2
     TList                   *fOutputReco;           //!<!   list on output slot 2
     R5Detector              *fITS;                  //!<!
-    AliPIDResponse          *fPIDResponse;
-	Bool_t fIsMCSignalProd;
+  //  AliPIDResponse          *fPIDResponse;
+
+  Bool_t fIsMCSignalProd;
+  vector<int> fNHitsAssigned;
+vector<int> fParticlePdg;
+vector<int> fMotherPdg;
 
     Int_t                  fProtonCuts;
     Int_t                  fKaonCuts;
