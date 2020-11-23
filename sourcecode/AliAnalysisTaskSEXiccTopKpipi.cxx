@@ -29,6 +29,7 @@
 #include "TH3F.h"
 #include "TList.h"
 #include "TChain.h"
+#include "TMath.h"
 #include <THnSparse.h>
 #include <TMath.h>
 #include <TDatabasePDG.h>
@@ -406,18 +407,18 @@ void AliAnalysisTaskSEXiccTopKpipi::MakeCandidates(){
 
   PrepareTracks();
 
-  for(int i=0; i<10000; i++){
+  for(int i=0; i<100; i++){
     if(!fProtonTrackArray->At(i)) continue;
     AliESDtrack* fProtonTrack = (AliESDtrack*)fEvent->GetTrack(fProtonTrackArray->At(i));
 
-    for(int j=0; j<10000; j++){
+    for(int j=0; j<100; j++){
       if(!fKaonTrackArray->At(j)) continue;
       AliESDtrack* fKaonTrack = (AliESDtrack*)fEvent->GetTrack(fKaonTrackArray->At(j));
 
       if(fKaonTrack->Charge()*fProtonTrack->Charge()>=0) continue;
       if(fKaonTrack->GetID()==fProtonTrack->GetID()) continue;
 
-      for(int k=0; k<10000; k++){
+      for(int k=0; k<100; k++){
         if(!fPionTrackArray->At(k)) continue;
         AliESDtrack* fPionTrack = (AliESDtrack*)fEvent->GetTrack(fPionTrackArray->At(k));
 
@@ -426,17 +427,16 @@ void AliAnalysisTaskSEXiccTopKpipi::MakeCandidates(){
         if(fPionTrack->GetID()==fKaonTrack->GetID()) continue;
         if(fPionTrack->GetID()==fProtonTrack->GetID()) continue;
 
-        for(int l=0; l<10000; l++){
-          if(!fSoftPionTrackArray->At(k)) continue;
-          AliESDtrack* fSoftPionTrack = (AliESDtrack*)fEvent->GetTrack(fSoftPionTrackArray->At(k));
-
-          if(fSoftPionTrack->Charge()*fProtonTrack->Charge()<=0) continue;
-          if(fSoftPionTrack->Charge()*fKaonTrack->Charge()>=0) continue;
+		for(int l=0; l<100; l++){
+          if(!fSoftPionTrackArray->At(l)) continue;
+          AliESDtrack* fSoftPionTrack = (AliESDtrack*)fEvent->GetTrack(fSoftPionTrackArray->At(l));
+		  if(fSoftPionTrack->Charge()*fProtonTrack->Charge()<=0) continue;
+		  if(fSoftPionTrack->Charge()*fKaonTrack->Charge()>=0) continue;
           if(fSoftPionTrack->Charge()*fPionTrack->Charge()<=0) continue;
-          if(fSoftPionTrack->GetID()==fKaonTrack->GetID()) continue;
+		  if(fSoftPionTrack->GetID()==fKaonTrack->GetID()) continue;
           if(fSoftPionTrack->GetID()==fProtonTrack->GetID()) continue;
-          if(fSoftPionTrack->GetID()==fPionTrack->GetID()) continue;
-
+		  if(fSoftPionTrack->GetID()==fPionTrack->GetID()) continue;
+//				cout << "FILL!!----------------------------------------------------------------" << endl;
           FillXiccHistogram(fProtonTrack,fKaonTrack,fPionTrack,fSoftPionTrack);
           //FillXiccTree(fProtonTrack,fKaonTrack,fPionTrack,fSoftPionTrack);
         }//l
@@ -471,6 +471,7 @@ void AliAnalysisTaskSEXiccTopKpipi::PrepareTracks(){
     }
      //AddAt (Int_t c, Int_t i) : Add Int_t c at position i. Check for out of bounds.
   }
+cout << "proton kaon pion spion : " << nProton << "  " << nKaon << "  " << nPion << "  "<< nSoftPion << endl;
 
   return;
 }
@@ -506,20 +507,19 @@ Bool_t AliAnalysisTaskSEXiccTopKpipi::IsSelected(Int_t CutFlag, AliESDtrack *trk
 //________________________________________________________________________
 void AliAnalysisTaskSEXiccTopKpipi::FillXiccHistogram(AliESDtrack *proton, AliESDtrack *kaon, AliESDtrack *pion, AliESDtrack *softpion){
 
-  Double_t *PionP, *KaonP, *ProtonP, *SPionP;
+  Double_t PionP[3], KaonP[3], ProtonP[3], SPionP[3];
   proton->GetConstrainedPxPyPz(ProtonP);
   kaon->GetConstrainedPxPyPz(KaonP);
   pion->GetConstrainedPxPyPz(PionP);
   softpion->GetConstrainedPxPyPz(SPionP);
-
   Double_t px_proton = ProtonP[0];
   Double_t py_proton = ProtonP[1];
   Double_t pz_proton = ProtonP[2];
-  Double_t pT_proton = sqrt(pow(ProtonP[0],2)+pow(ProtonP[1],2));
+  Double_t pT_proton = sqrt(pow(px_proton,2)+pow(py_proton,2));
   Double_t px_kaon = KaonP[0];
   Double_t py_kaon = KaonP[1];
   Double_t pz_kaon = KaonP[2];
-  Double_t pT_kaon = sqrt(pow(KaonP[0],2)+pow(KaonP[1],2));
+  Double_t pT_kaon = sqrt(pow(px_kaon,2)+pow(py_kaon,2));
   Double_t px_pion = PionP[0];
   Double_t py_pion = PionP[1];
   Double_t pz_pion = PionP[2];
@@ -540,28 +540,27 @@ void AliAnalysisTaskSEXiccTopKpipi::FillXiccHistogram(AliESDtrack *proton, AliES
   Double_t Y_kaon = kaon->Y();
   Double_t Y_pion = pion->Y();
   Double_t Y_spion = softpion->Y();
-
   Double_t px_Xic = sqrt(pow(ProtonP[0]+KaonP[0]+PionP[0],2));
   Double_t py_Xic = sqrt(pow(ProtonP[1]+KaonP[1]+PionP[1],2));
   Double_t pz_Xic = sqrt(pow(ProtonP[2]+KaonP[2]+PionP[2],2));
   Double_t pT_Xic = sqrt(pow(px_Xic,2)+pow(py_Xic,2));
   Double_t E_Xic = sqrt(pow(px_Xic,2)+pow(py_Xic,2)+pow(pz_Xic,2)+2.46794*2.46794);
   Double_t m_Xic = sqrt(pow(E_proton+E_kaon+E_pion,2)-pow(px_Xic,2)-pow(py_Xic,2)-pow(pz_Xic,2));
-
+//cout << "here0" << endl;
   Double_t px_Xicc = sqrt(pow(px_Xic+SPionP[0],2));
   Double_t py_Xicc = sqrt(pow(py_Xic+SPionP[1],2));
   Double_t pz_Xicc = sqrt(pow(pz_Xic+SPionP[2],2));
   Double_t pT_Xicc = sqrt(pow(px_Xicc,2)+pow(py_Xicc,2));
   Double_t E_Xicc = sqrt(pow(px_Xicc,2)+pow(py_Xicc,2)+pow(pz_Xicc,2)+3.6212*3.6212);
   Double_t m_Xicc = sqrt(pow(E_Xic+E_spion,2)-pow(px_Xicc,2)-pow(py_Xicc,2)-pow(pz_Xicc,2));
-
+//cout << "here " << endl;
   Double_t px_Merge[6] = {px_proton,px_kaon,px_pion,px_spion,px_Xic,px_Xicc}; fhSparsePx->Fill(px_Merge);
   Double_t py_Merge[6] = {py_proton,py_kaon,py_pion,py_spion,py_Xic,py_Xicc}; fhSparsePy->Fill(py_Merge);
   Double_t pz_Merge[6] = {pz_proton,pz_kaon,pz_pion,pz_spion,pz_Xic,pz_Xicc}; fhSparsePz->Fill(pz_Merge);
   Double_t pT_Merge[6] = {pT_proton,pT_kaon,pT_pion,pT_spion,pT_Xic,pT_Xicc}; fhSparsePT->Fill(pT_Merge);
   Double_t m_Merge[6] = {m_proton,m_kaon,m_pion,m_spion,m_Xic,m_Xicc}; fhSparseM->Fill(m_Merge);
   Double_t Y_Merge[4] = {Y_proton,Y_kaon,Y_pion,Y_spion}; fhSparseY->Fill(Y_Merge);
-
+//cout << "here2" << endl;
   return;
 }
 
