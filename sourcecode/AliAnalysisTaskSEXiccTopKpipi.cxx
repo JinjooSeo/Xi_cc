@@ -427,15 +427,15 @@ void AliAnalysisTaskSEXiccTopKpipi::MakeCandidates(){
         if(fPionTrack->GetID()==fKaonTrack->GetID()) continue;
         if(fPionTrack->GetID()==fProtonTrack->GetID()) continue;
 
-		for(int l=0; l<100; l++){
+        for(int l=0; l<100; l++){
           if(!fSoftPionTrackArray->At(l)) continue;
           AliESDtrack* fSoftPionTrack = (AliESDtrack*)fEvent->GetTrack(fSoftPionTrackArray->At(l));
-		  if(fSoftPionTrack->Charge()*fProtonTrack->Charge()<=0) continue;
-		  if(fSoftPionTrack->Charge()*fKaonTrack->Charge()>=0) continue;
+          if(fSoftPionTrack->Charge()*fProtonTrack->Charge()<=0) continue;
+          if(fSoftPionTrack->Charge()*fKaonTrack->Charge()>=0) continue;
           if(fSoftPionTrack->Charge()*fPionTrack->Charge()<=0) continue;
-		  if(fSoftPionTrack->GetID()==fKaonTrack->GetID()) continue;
+          if(fSoftPionTrack->GetID()==fKaonTrack->GetID()) continue;
           if(fSoftPionTrack->GetID()==fProtonTrack->GetID()) continue;
-		  if(fSoftPionTrack->GetID()==fPionTrack->GetID()) continue;
+          if(fSoftPionTrack->GetID()==fPionTrack->GetID()) continue;
 //				cout << "FILL!!----------------------------------------------------------------" << endl;
           FillXiccHistogram(fProtonTrack,fKaonTrack,fPionTrack,fSoftPionTrack);
           //FillXiccTree(fProtonTrack,fKaonTrack,fPionTrack,fSoftPionTrack);
@@ -484,18 +484,22 @@ Bool_t AliAnalysisTaskSEXiccTopKpipi::IsSelected(Int_t CutFlag, AliESDtrack *trk
 
   if(CutFlag==1){ //Proton candidate
     //if(fPIDResponse->GetNumberOfSigmasTPC(trk,AliPID::kProton)>4) return kFALSE;
+    if(TMath::Abs(trk->GetMass()-TDatabasePDG::Instance()->GetParticle(2212)->Mass())>0.05) return kFALSE;
     return kTRUE;
   }
   else if(CutFlag==2){ //Kaon candidate
     //if(fPIDResponse->GetNumberOfSigmasTPC(trk,AliPID::kKaon)>4) return kFALSE;
+    if(TMath::Abs(trk->GetMass()-TDatabasePDG::Instance()->GetParticle(321)->Mass())>0.05) return kFALSE;
     return kTRUE;
   }
   else if(CutFlag==3){ //Pion candidate
     //if(fPIDResponse->GetNumberOfSigmasTPC(trk,AliPID::kPion)>2) return kFALSE;  //to seperate pion and electron
+    if(TMath::Abs(trk->GetMass()-TDatabasePDG::Instance()->GetParticle(211)->Mass())>0.05) return kFALSE;
     return kTRUE;
   }
   else if(CutFlag==4){ //Soft pion candidate
     //if(fPIDResponse->GetNumberOfSigmasTPC(trk,AliPID::kPion)>2) return kFALSE;  //to seperate pion and electron
+    if(TMath::Abs(trk->GetMass()-TDatabasePDG::Instance()->GetParticle(211)->Mass())>0.05) return kFALSE;
     return kTRUE;
   }
   else{
@@ -528,10 +532,10 @@ void AliAnalysisTaskSEXiccTopKpipi::FillXiccHistogram(AliESDtrack *proton, AliES
   Double_t py_spion = SPionP[1];
   Double_t pz_spion = SPionP[2];
   Double_t pT_spion = sqrt(pow(SPionP[0],2)+pow(SPionP[1],2));
-  Double_t m_proton = proton->M();
-  Double_t m_kaon = kaon->M();
-  Double_t m_pion = pion->M();
-  Double_t m_spion = softpion->M();
+  Double_t m_proton = proton->GetMass();
+  Double_t m_kaon = kaon->GetMass();
+  Double_t m_pion = pion->GetMass();
+  Double_t m_spion = softpion->GetMass();
   Double_t E_proton = proton->E();
   Double_t E_kaon = kaon->E();
   Double_t E_pion = pion->E();
