@@ -312,6 +312,8 @@ public:
     
     void SetTOFResolution(double r=20) { fTOFResolutionPS = r;}
     Double_t GetTOFResolution() const { return fTOFResolutionPS;}
+
+    void SetTrackPID();
     
     // Helper functions
     Double_t ThetaMCS                 ( Double_t mass, Double_t RadLength, Double_t momentum ) const;

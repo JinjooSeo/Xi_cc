@@ -298,10 +298,10 @@ fNcounters->GetXaxis()->SetBinLabel(8,"Reco #Omega^{c}");
     fOutput->SetOwner();
     fOutput->SetName("listOutput");
 
-    fProtonTrackArray = new TArrayI(10000);
-    fKaonTrackArray = new TArrayI(10000);
-    fPionTrackArray = new TArrayI(10000);
-    fSoftPionTrackArray = new TArrayI(10000);
+    fProtonTrackArray = new TArrayI(3500);
+    fKaonTrackArray = new TArrayI(3500);
+    fPionTrackArray = new TArrayI(3500);
+    fSoftPionTrackArray = new TArrayI(3500);
 
 	fProtonCuts = 1;
 	fKaonCuts = 2;
@@ -427,15 +427,15 @@ void AliAnalysisTaskSEXiccTopKpipi::MakeCandidates(){
         if(fPionTrack->GetID()==fKaonTrack->GetID()) continue;
         if(fPionTrack->GetID()==fProtonTrack->GetID()) continue;
 
-        for(int l=0; l<100; l++){
+		for(int l=0; l<100; l++){
           if(!fSoftPionTrackArray->At(l)) continue;
           AliESDtrack* fSoftPionTrack = (AliESDtrack*)fEvent->GetTrack(fSoftPionTrackArray->At(l));
-          if(fSoftPionTrack->Charge()*fProtonTrack->Charge()<=0) continue;
-          if(fSoftPionTrack->Charge()*fKaonTrack->Charge()>=0) continue;
+		  if(fSoftPionTrack->Charge()*fProtonTrack->Charge()<=0) continue;
+		  if(fSoftPionTrack->Charge()*fKaonTrack->Charge()>=0) continue;
           if(fSoftPionTrack->Charge()*fPionTrack->Charge()<=0) continue;
-          if(fSoftPionTrack->GetID()==fKaonTrack->GetID()) continue;
+		  if(fSoftPionTrack->GetID()==fKaonTrack->GetID()) continue;
           if(fSoftPionTrack->GetID()==fProtonTrack->GetID()) continue;
-          if(fSoftPionTrack->GetID()==fPionTrack->GetID()) continue;
+		  if(fSoftPionTrack->GetID()==fPionTrack->GetID()) continue;
 //				cout << "FILL!!----------------------------------------------------------------" << endl;
           FillXiccHistogram(fProtonTrack,fKaonTrack,fPionTrack,fSoftPionTrack);
           //FillXiccTree(fProtonTrack,fKaonTrack,fPionTrack,fSoftPionTrack);
@@ -453,6 +453,8 @@ void AliAnalysisTaskSEXiccTopKpipi::PrepareTracks(){
 
   for(Int_t i=0; i<nentr; i++){
     trk = (AliESDtrack*)fEvent->GetTrack(i);
+	//cout << "PID : " <<trk->GetPID() << endl;
+	//	trk->Print("");
     if(IsSelected(fProtonCuts,trk)) {
       fProtonTrackArray->AddAt(i,nProton);
       nProton++;
@@ -532,10 +534,10 @@ void AliAnalysisTaskSEXiccTopKpipi::FillXiccHistogram(AliESDtrack *proton, AliES
   Double_t py_spion = SPionP[1];
   Double_t pz_spion = SPionP[2];
   Double_t pT_spion = sqrt(pow(SPionP[0],2)+pow(SPionP[1],2));
-  Double_t m_proton = proton->GetMass();
-  Double_t m_kaon = kaon->GetMass();
-  Double_t m_pion = pion->GetMass();
-  Double_t m_spion = softpion->GetMass();
+  Double_t m_proton = proton->M();
+  Double_t m_kaon = kaon->M();
+  Double_t m_pion = pion->M();
+  Double_t m_spion = softpion->M();
   Double_t E_proton = proton->E();
   Double_t E_kaon = kaon->E();
   Double_t E_pion = pion->E();
@@ -622,6 +624,7 @@ void AliAnalysisTaskSEXiccTopKpipi::RecoEvent(){
         Float_t rxyPart=0.;
         Int_t nhistassigned=-1;
         Int_t nhistreco=-1;
+		Double_t massPart = 0.;
         bool isReco=false;
 
 
@@ -652,7 +655,9 @@ void AliAnalysisTaskSEXiccTopKpipi::RecoEvent(){
         yPart=part->Vy();
         zPart=part->Vz();
         rxyPart=part->R();
-        //Printf("HERE i=%10d pdg=%5d lblmoth=%10d pt=%.5f, eta=%.5f, phi=%.5f, x=%.5f y=%.5f z=%.5f, rxy=%.5f",i,pdgPart, lblMoth, ptPart, etaPart, phiPart, xPart, yPart, zPart, rxyPart);
+		massPart=part->GetMass();
+		//Printf("HERE i=%10d pdg=%5d mass=%+5.3e",i,pdgPart,massPart);
+       // Printf("HERE i=%10d pdg=%5d lblmoth=%10d pt=%.5f, eta=%.5f, phi=%.5f, x=%.5f y=%.5f z=%.5f, rxy=%.5f",i,pdgPart, lblMoth, ptPart, etaPart, phiPart, xPart, yPart, zPart, rxyPart);
         Bool_t res = kFALSE;
         if(ptPart>0.){
             res = fITS->ProcessTrack(part);
@@ -708,15 +713,20 @@ void AliAnalysisTaskSEXiccTopKpipi::RecoEvent(){
         if(lblMoth==-1) continue;
         if(TDatabasePDG::Instance()->GetParticle(part->GetPdgCode())->Charge()/3==0 ) continue;
         // fast track reco
-        //Printf("i track = %d part = %s eta=%f motherindex =%d",i,part->GetName(),thisEta,motherIndex);
+        //Printf("i track = %d part = %s",i,part->GetName());
         //Bool_t res = fITS->ProcessTrack(part);
         if(res){
             isReco=true;
             esdTr = (AliESDtrack*)fITS->GetProbeTrackInwardAsESDTrack();
             esdTr->SetStatus(AliESDtrack::kTPCin|AliESDtrack::kTPCout|AliESDtrack::kTPCrefit|AliESDtrack::kITSrefit);
-            esdTr->SetTRDntracklets((UChar_t)nhistassigned);
+				esdTr->SetTRDntracklets((UChar_t)nhistassigned);
             esdTr->SetLabel(i);
-            fEvent->AddTrack(esdTr);
+			//	Printf("i track = %d part = %s",i,part->GetName());
+		cout << "Track Info : " << esdTr->GetPID() << endl;
+            double dum = fEvent->AddTrack(esdTr);
+				cout << "Track ID " << dum << endl;
+				AliESDtrack *trkdum = (AliESDtrack*) fEvent->GetTrack(dum);
+				cout << "Track PID " << trkdum->GetPID() << endl;
             const TBits &hits = esdTr->GetTPCClusterMap();
             Int_t nhits=0;
             for (int ilr=0;ilr<fITS->GetNActiveLayers();ilr++) {
@@ -731,7 +741,7 @@ void AliAnalysisTaskSEXiccTopKpipi::RecoEvent(){
             isReco=false;
         }
 
-        //Printf("FILL Tree REconstruction: index=%d res=%d | %d %d | %f %f %f %f %f %f %f %f %f | %d %d %d",i,res,fParticleVarPdg,fParticleVarPdgMoth,fParticleVarPt,fParticleVarP,fParticleVarEta,fParticleVarRap,fParticleVarPhi,fParticleVarX,fParticleVarY,fParticleVarZ,fParticleVarRxy,fParticleVarNhitsAssigned,fParticleVarNhitsReco,fParticleVarIsReco);
+//        Printf("FILL Tree REconstruction: index=%d res=%d | %d %d | %f %f %f %f %f %f %f %f %f | %d %d %d",i,res,fParticleVarPdg,fParticleVarPdgMoth,fParticleVarPt,fParticleVarP,fParticleVarEta,fParticleVarRap,fParticleVarPhi,fParticleVarX,fParticleVarY,fParticleVarZ,fParticleVarRxy,fParticleVarNhitsAssigned,fParticleVarNhitsReco,fParticleVarIsReco);
         //if(fIsMCSignalProd && fIsFillReconstrucion) fTreeReconstruction->Fill();
 //        esdTr = (AliESDtrack*)fITS->GetProbeTrackInwardAsESDTrack();
 //        esdTr->SetStatus(AliESDtrack::kTPCin|AliESDtrack::kTPCout|AliESDtrack::kTPCrefit|AliESDtrack::kITSrefit);
@@ -779,6 +789,7 @@ R5Detector* AliAnalysisTaskSEXiccTopKpipi::CreateDetector(){
 
     AliESDtrack::OnlineMode(kTRUE); // to avoid friend track creation
     R5Detector* det = new R5Detector("ALICE","ITS");
+	//	R5Detector* det = new R5Detector();
 
     det->SetPropagateToOrigin(kTRUE); // if we want all tracks to be propagated to DCA to 0/0/0.
 

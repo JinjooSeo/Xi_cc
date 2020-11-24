@@ -40,6 +40,7 @@
 #define PionMass                 0.139  // Mass of the Pion
 #define KaonMass                 0.498  // Mass of the Kaon
 #define D0Mass                   1.865  // Mass of the D0
+#define ProtonMass				 0.938  // Mass of the Proton
 
 //TMatrixD *probKomb; // table for efficiency kombinatorics
 
@@ -967,7 +968,9 @@ Bool_t R5Detector::UpdateTrack(R5Probe* trc, R5Layer* lr, R5Cluster* cl) const
 
 Bool_t R5Detector::ProcessTrack(const TParticle* part)
 {
-    return ProcessTrack(part->Pt(),part->Eta(),part->GetMass(),
+		double mass = 0.;
+		mass = part->GetMass();
+    return ProcessTrack(part->Pt(),part->Eta(),mass,
                         TDatabasePDG::Instance()->GetParticle(part->GetPdgCode())->Charge()/3,
                         part->Phi(),part->Vx(),part->Vy(),part->Vz(),part->T());
 }
@@ -985,6 +988,8 @@ Bool_t R5Detector::ProcessTrack(Double_t pt, Double_t eta, Double_t mass, int ch
     // do backward propagation
     R5Probe probeInw = fProbeOutMC;
     probeInw.ResetTrackingInfo();  // used default (pion) mass for tracking
+    probeInw.SetMass(mass); //new
+//		cout << "MASS : " << mass << endl;
     R5Cluster* cl = 0;
     // covariance matrix must be already reset
     int innerTracked = GetLayerID(fFirstActiveLayerTracked);
@@ -1024,10 +1029,12 @@ Bool_t R5Detector::ProcessTrack(Double_t pt, Double_t eta, Double_t mass, int ch
         //    printf("ProbeInw@%d: ",ilr); probeInw.Print("t");
     }
     fProbeInward = probeInw;
-    
+ //  fProbeInward.Print(); 
     // do outward propagation
     R5Probe probeOut = probeInw;
     probeOut.ResetTrackingInfo();
+		probeOut.SetMass(mass); //new
+//cout << "R5Detector : "<<mass << endl;
     // init TOF info assuming the track comes from the vertex
     probeOut.StartTimeIntegral();
     R5Probe r5Tmp = probeInw;
@@ -1112,7 +1119,8 @@ Bool_t R5Detector::ProcessTrack(Double_t pt, Double_t eta, Double_t mass, int ch
         fProbeInward.StartTimeIntegral();
         fProbeInward.SetTOFsignal(0);
     }
-    
+
+//fProbeInward.Print();   
     /*
      // do final inward propagation with eventual fake clusters attachment
      probeInw = fProbeOutMC;
@@ -1231,6 +1239,9 @@ const AliESDtrack* R5Detector::GetProbeTrackInwardAsESDTrack()
 {
     // create ESD track
     fESDtrack.ResetStatus( 0xffffffffffffffffUL );
+//fProbeInward.Print();
+SetTrackPID();
+//cout << "Track Info in R5Det first : " << fESDtrack.GetPID() << endl;
     fESDtrack.UpdateTrackParams(&fProbeInward, AliESDtrack::kITSin);
     fESDtrack.SetStatus(AliESDtrack::kITSout|AliESDtrack::kITSrefit);
     TBits clMap,fakeMap;
@@ -1258,8 +1269,15 @@ const AliESDtrack* R5Detector::GetProbeTrackInwardAsESDTrack()
         fESDtrack.SetIntegratedLength(fProbeInward.GetIntegratedLength());
         fESDtrack.SetTOFsignal(fProbeInward.GetTOFsignal());
     }
-    
+   
+//cout << "Track Info in R5Det : " << fESDtrack.GetPID() << endl; 
     return &fESDtrack;
+}
+
+void R5Detector::SetTrackPID(){
+		if(fabs(fProbeInward.GetMass()-ProtonMass)<0.1) fESDtrack.SetPIDForTracking(4);
+		if(fabs(fProbeInward.GetMass()-PionMass)<0.1) fESDtrack.SetPIDForTracking(2);
+		if(fabs(fProbeInward.GetMass()-KaonMass)<0.1) fESDtrack.SetPIDForTracking(3);
 }
 
 void R5Detector::AddESDTrackToEvent(AliESDEvent* esdEv, const AliESDtrack* trc) {
