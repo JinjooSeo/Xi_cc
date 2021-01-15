@@ -10,7 +10,7 @@
 
 Bool_t runLocal=kTRUE;                                  // flag to run locally on AliAOD.root + AliAOD.VertexingHF.root
 //TString pathToLocalAODfiles="../Omega_ccc/input/bkg/";//"./analysis/background"; // ../input_files/bkg_Kr path to find AOD files when running locally
-TString pathToLocalAODfiles="../data";
+TString pathToLocalAODfiles="../data/210114";
 Bool_t runGridTest=kFALSE;                                // flag to run a grid test: kTRUE (+runLocal=kFALSE). To run job on GRID: runGridTest=kFALSE, runLocal=kFALSE
 TString runMode="full";                                  // sets the run grid mode: "full", "terminate"
 
@@ -378,7 +378,7 @@ void runAnalysis_v2()
         //mgr->StartAnalysis("local", chainAOD,25,226);//, 100);//,2,103);//, 10);//,1,0);//,2,0);
         TStopwatch timer;
         timer.Start();
-        mgr->StartAnalysis("local", chainAOD, 20);//, 100);//,2,103);//, 10);//,1,0);//,2,0);
+        mgr->StartAnalysis("local", chainAOD,10000);//, 100);//,2,103);//, 10);//,1,0);//,2,0);
         timer.Stop();
         printf("RealTime =%7.3f s, CpuTime =%7.3f s\n",timer.RealTime(),timer.CpuTime());
 

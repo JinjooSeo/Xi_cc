@@ -83,9 +83,9 @@ AliAnalysisTaskSEXiccTopKpipi *AddTaskOmegacccToOmega3Pi()
     mgr->ConnectOutput(task,1,coutputEntries);
     //mgr->ConnectOutput(task,2,coutputCounters);
     mgr->ConnectOutput(task,2,coutputListGen);
-   /* mgr->ConnectOutput(task,4,coutputListReco);
-    mgr->ConnectOutput(task,5,coutputTreeCutVarCCC);
-    mgr->ConnectOutput(task,6,coutputTreeCutVarC);
+   // mgr->ConnectOutput(task,4,coutputListReco);
+    mgr->ConnectOutput(task,3,coutputTreeCutVarCCC);
+   /* mgr->ConnectOutput(task,6,coutputTreeCutVarC);
 
     if(isignalProd){
         mgr->ConnectOutput(task,7,coutputTreeCutVarCC);

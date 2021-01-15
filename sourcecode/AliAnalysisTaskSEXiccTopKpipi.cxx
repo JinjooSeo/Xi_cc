@@ -114,7 +114,11 @@ fhSparsePy(0x0),
 fhSparsePz(0x0),
 fhSparsePT(0x0),
 fhSparseY(0x0),
-fhSparseM(0x0)
+fhSparseM(0x0),
+nProton(0), 
+nKaon(0),   
+nPion(0),   
+nSoftPion(0)
 {
     /// Default constructor
 }
@@ -146,7 +150,11 @@ fhSparsePy(0x0),
 fhSparsePz(0x0),
 fhSparsePT(0x0),
 fhSparseY(0x0),
-fhSparseM(0x0)
+fhSparseM(0x0),
+nProton(0),  
+nKaon(0), 
+nPion(0),  
+nSoftPion(0)
 {
     /// Default constructor
 
@@ -154,6 +162,7 @@ fhSparseM(0x0)
 // Output slot #1 writes into a TH1F container (number of events)
   DefineOutput(1,TH1F::Class());
   DefineOutput(2,TList::Class());
+  DefineOutput(3,TTree::Class());
 }
 //________________________________________________________________________
 AliAnalysisTaskSEXiccTopKpipi::~AliAnalysisTaskSEXiccTopKpipi()
@@ -260,6 +269,8 @@ void AliAnalysisTaskSEXiccTopKpipi::UserCreateOutputObjects()
     fEvent = new AliESDEvent();
     fEvent->CreateStdContent();
 
+ DefineTree();
+
     // create new ITS detector
     fITS = CreateDetector();
 
@@ -298,10 +309,10 @@ fNcounters->GetXaxis()->SetBinLabel(8,"Reco #Omega^{c}");
     fOutput->SetOwner();
     fOutput->SetName("listOutput");
 
-    fProtonTrackArray = new TArrayI(3500);
-    fKaonTrackArray = new TArrayI(3500);
-    fPionTrackArray = new TArrayI(3500);
-    fSoftPionTrackArray = new TArrayI(3500);
+    fProtonTrackArray = new TArrayI(1000);
+    fKaonTrackArray = new TArrayI(1000);
+    fPionTrackArray = new TArrayI(2000);
+    fSoftPionTrackArray = new TArrayI(2000);
 
 	fProtonCuts = 1;
 	fKaonCuts = 2;
@@ -336,6 +347,7 @@ fNcounters->GetXaxis()->SetBinLabel(8,"Reco #Omega^{c}");
     // Post the data
     PostData(1,fNentries);
     PostData(2,fOutput);
+    PostData(3,fTree);
 
     return;
 }
@@ -346,7 +358,7 @@ void AliAnalysisTaskSEXiccTopKpipi::UserExec(Option_t */*option*/)
 {
     /// Execute analysis for current event:
     fEvtCount++;
-    cout<< "UserExec " << fEvtCount << endl;
+ //   cout<< "UserExec " << fEvtCount << endl;
     // Process MC truth
 
     AliMCEventHandler* eventHandler = dynamic_cast<AliMCEventHandler*> (AliAnalysisManager::GetAnalysisManager()->GetMCtruthEventHandler());
@@ -376,10 +388,12 @@ void AliAnalysisTaskSEXiccTopKpipi::UserExec(Option_t */*option*/)
 
     // reset ESD event
     fEvent->Reset();
+		//cout << "Num Of Tracks Before: " << fEvent->GetNumberOfTracks()<< endl;
     fEvent->SetMagneticField(fITS->GetBField()*10.);
     fEvent->SetDiamond(&diamond);
     // fill ESD event
     RecoEvent();
+		//cout << "Num Of Tracks After: " << fEvent->GetNumberOfTracks()<< endl;
     fBzkG = fEvent->GetMagneticField();
     fPrimVtx   = (AliESDVertex*)fEvent->GetPrimaryVertexTracks();
     Double_t sigma[3]={0.,0.,0.};
@@ -406,29 +420,29 @@ void AliAnalysisTaskSEXiccTopKpipi::Terminate(Option_t */*option*/)
 void AliAnalysisTaskSEXiccTopKpipi::MakeCandidates(){
 
   PrepareTracks();
-
-  for(int i=0; i<100; i++){
-    if(!fProtonTrackArray->At(i)) continue;
+//cout << "hh" << endl;
+  for(int i=0; i<nProton; i++){ //for(int i=0; i<nProton; i++){
+    //if(fProtonTrackArray->At(i)==-999) continue;
     AliESDtrack* fProtonTrack = (AliESDtrack*)fEvent->GetTrack(fProtonTrackArray->At(i));
 
-    for(int j=0; j<100; j++){
-      if(!fKaonTrackArray->At(j)) continue;
+    for(int j=0; j<nKaon; j++){ //for(int j=0; j<nKaon; j++){
+      //if(fKaonTrackArray->At(j)==-999) continue;
       AliESDtrack* fKaonTrack = (AliESDtrack*)fEvent->GetTrack(fKaonTrackArray->At(j));
 
       if(fKaonTrack->Charge()*fProtonTrack->Charge()>=0) continue;
       if(fKaonTrack->GetID()==fProtonTrack->GetID()) continue;
 
-      for(int k=0; k<100; k++){
-        if(!fPionTrackArray->At(k)) continue;
+      for(int k=0; k<nPion; k++){ //for(int k=0; k<nPion; k++){
+        //if(fPionTrackArray->At(k)==-999) continue;
         AliESDtrack* fPionTrack = (AliESDtrack*)fEvent->GetTrack(fPionTrackArray->At(k));
-
-        if(fPionTrack->Charge()*fKaonTrack->Charge()>=0) continue;
+        
+		if(fPionTrack->Charge()*fKaonTrack->Charge()>=0) continue;
         if(fPionTrack->Charge()*fProtonTrack->Charge()<=0) continue;
         if(fPionTrack->GetID()==fKaonTrack->GetID()) continue;
         if(fPionTrack->GetID()==fProtonTrack->GetID()) continue;
 
-		for(int l=0; l<100; l++){
-          if(!fSoftPionTrackArray->At(l)) continue;
+		for(int l=0; l<nPion; l++){ //for(int k=0; k<nPion; k++){
+          //if(fSoftPionTrackArray->At(l)==-999) continue;
           AliESDtrack* fSoftPionTrack = (AliESDtrack*)fEvent->GetTrack(fSoftPionTrackArray->At(l));
 		  if(fSoftPionTrack->Charge()*fProtonTrack->Charge()<=0) continue;
 		  if(fSoftPionTrack->Charge()*fKaonTrack->Charge()>=0) continue;
@@ -436,7 +450,7 @@ void AliAnalysisTaskSEXiccTopKpipi::MakeCandidates(){
 		  if(fSoftPionTrack->GetID()==fKaonTrack->GetID()) continue;
           if(fSoftPionTrack->GetID()==fProtonTrack->GetID()) continue;
 		  if(fSoftPionTrack->GetID()==fPionTrack->GetID()) continue;
-//				cout << "FILL!!----------------------------------------------------------------" << endl;
+		 // cout << "FILL!!----------------------------------------------------------------" << endl;
           FillXiccHistogram(fProtonTrack,fKaonTrack,fPionTrack,fSoftPionTrack);
           //FillXiccTree(fProtonTrack,fKaonTrack,fPionTrack,fSoftPionTrack);
         }//l
@@ -448,8 +462,15 @@ void AliAnalysisTaskSEXiccTopKpipi::MakeCandidates(){
 //________________________________________________________________________
 void AliAnalysisTaskSEXiccTopKpipi::PrepareTracks(){
   AliESDtrack* trk;
-  Int_t nProton = 0; Int_t nKaon = 0; Int_t nPion = 0; Int_t nSoftPion = 0;
   Int_t nentr = (Int_t)fEvent->GetNumberOfTracks();
+  fProtonTrackArray->Reset();
+  fKaonTrackArray->Reset();
+  fPionTrackArray->Reset();
+  fSoftPionTrackArray->Reset();
+    nProton = 0;
+    nKaon = 0;
+    nPion = 0;
+    nSoftPion = 0;
 
   for(Int_t i=0; i<nentr; i++){
     trk = (AliESDtrack*)fEvent->GetTrack(i);
@@ -473,7 +494,7 @@ void AliAnalysisTaskSEXiccTopKpipi::PrepareTracks(){
     }
      //AddAt (Int_t c, Int_t i) : Add Int_t c at position i. Check for out of bounds.
   }
-cout << "proton kaon pion spion : " << nProton << "  " << nKaon << "  " << nPion << "  "<< nSoftPion << endl;
+//cout << "proton kaon pion spion : " << nProton << "  " << nKaon << "  " << nPion << "  "<< nSoftPion << endl;
 
   return;
 }
@@ -486,22 +507,22 @@ Bool_t AliAnalysisTaskSEXiccTopKpipi::IsSelected(Int_t CutFlag, AliESDtrack *trk
 
   if(CutFlag==1){ //Proton candidate
     //if(fPIDResponse->GetNumberOfSigmasTPC(trk,AliPID::kProton)>4) return kFALSE;
-    if(TMath::Abs(trk->GetMass()-TDatabasePDG::Instance()->GetParticle(2212)->Mass())>0.05) return kFALSE;
+    if(TMath::Abs(GetCorrectedMass(trk)-TDatabasePDG::Instance()->GetParticle(2212)->Mass())>0.05) return kFALSE;
     return kTRUE;
   }
   else if(CutFlag==2){ //Kaon candidate
     //if(fPIDResponse->GetNumberOfSigmasTPC(trk,AliPID::kKaon)>4) return kFALSE;
-    if(TMath::Abs(trk->GetMass()-TDatabasePDG::Instance()->GetParticle(321)->Mass())>0.05) return kFALSE;
+    if(TMath::Abs(GetCorrectedMass(trk)-TDatabasePDG::Instance()->GetParticle(321)->Mass())>0.05) return kFALSE;
     return kTRUE;
   }
   else if(CutFlag==3){ //Pion candidate
     //if(fPIDResponse->GetNumberOfSigmasTPC(trk,AliPID::kPion)>2) return kFALSE;  //to seperate pion and electron
-    if(TMath::Abs(trk->GetMass()-TDatabasePDG::Instance()->GetParticle(211)->Mass())>0.05) return kFALSE;
+    if(TMath::Abs(GetCorrectedMass(trk)-TDatabasePDG::Instance()->GetParticle(211)->Mass())>0.05) return kFALSE;
     return kTRUE;
   }
   else if(CutFlag==4){ //Soft pion candidate
     //if(fPIDResponse->GetNumberOfSigmasTPC(trk,AliPID::kPion)>2) return kFALSE;  //to seperate pion and electron
-    if(TMath::Abs(trk->GetMass()-TDatabasePDG::Instance()->GetParticle(211)->Mass())>0.05) return kFALSE;
+    if(TMath::Abs(GetCorrectedMass(trk)-TDatabasePDG::Instance()->GetParticle(211)->Mass())>0.05) return kFALSE;
     return kTRUE;
   }
   else{
@@ -510,14 +531,27 @@ Bool_t AliAnalysisTaskSEXiccTopKpipi::IsSelected(Int_t CutFlag, AliESDtrack *trk
   }
 }
 
+Double_t AliAnalysisTaskSEXiccTopKpipi::GetCorrectedMass(AliESDtrack *trk){
+  Double_t m = trk->M();
+  Double_t P[3];
+  trk->GetPxPyPz(P);
+  Double_t px = P[0];
+  Double_t py = P[1];
+  Double_t pz = P[2];
+  Double_t E = trk->E(); 
+  Double_t CorrectedM = sqrt(E*E-px*px-py*py-pz*pz);
+
+  return CorrectedM;
+}
+
 //________________________________________________________________________
 void AliAnalysisTaskSEXiccTopKpipi::FillXiccHistogram(AliESDtrack *proton, AliESDtrack *kaon, AliESDtrack *pion, AliESDtrack *softpion){
 
   Double_t PionP[3], KaonP[3], ProtonP[3], SPionP[3];
-  proton->GetConstrainedPxPyPz(ProtonP);
-  kaon->GetConstrainedPxPyPz(KaonP);
-  pion->GetConstrainedPxPyPz(PionP);
-  softpion->GetConstrainedPxPyPz(SPionP);
+  proton->GetPxPyPz(ProtonP);
+  kaon->GetPxPyPz(KaonP);
+  pion->GetPxPyPz(PionP);
+  softpion->GetPxPyPz(SPionP);
   Double_t px_proton = ProtonP[0];
   Double_t py_proton = ProtonP[1];
   Double_t pz_proton = ProtonP[2];
@@ -534,10 +568,10 @@ void AliAnalysisTaskSEXiccTopKpipi::FillXiccHistogram(AliESDtrack *proton, AliES
   Double_t py_spion = SPionP[1];
   Double_t pz_spion = SPionP[2];
   Double_t pT_spion = sqrt(pow(SPionP[0],2)+pow(SPionP[1],2));
-  Double_t m_proton = proton->M();
-  Double_t m_kaon = kaon->M();
-  Double_t m_pion = pion->M();
-  Double_t m_spion = softpion->M();
+  Double_t m_proton = GetCorrectedMass(proton);
+  Double_t m_kaon = GetCorrectedMass(kaon);
+  Double_t m_pion = GetCorrectedMass(pion);
+  Double_t m_spion = GetCorrectedMass(softpion);
   Double_t E_proton = proton->E();
   Double_t E_kaon = kaon->E();
   Double_t E_pion = pion->E();
@@ -552,21 +586,18 @@ void AliAnalysisTaskSEXiccTopKpipi::FillXiccHistogram(AliESDtrack *proton, AliES
   Double_t pT_Xic = sqrt(pow(px_Xic,2)+pow(py_Xic,2));
   Double_t E_Xic = sqrt(pow(px_Xic,2)+pow(py_Xic,2)+pow(pz_Xic,2)+2.46794*2.46794);
   Double_t m_Xic = sqrt(pow(E_proton+E_kaon+E_pion,2)-pow(px_Xic,2)-pow(py_Xic,2)-pow(pz_Xic,2));
-//cout << "here0" << endl;
   Double_t px_Xicc = sqrt(pow(px_Xic+SPionP[0],2));
   Double_t py_Xicc = sqrt(pow(py_Xic+SPionP[1],2));
   Double_t pz_Xicc = sqrt(pow(pz_Xic+SPionP[2],2));
   Double_t pT_Xicc = sqrt(pow(px_Xicc,2)+pow(py_Xicc,2));
   Double_t E_Xicc = sqrt(pow(px_Xicc,2)+pow(py_Xicc,2)+pow(pz_Xicc,2)+3.6212*3.6212);
   Double_t m_Xicc = sqrt(pow(E_Xic+E_spion,2)-pow(px_Xicc,2)-pow(py_Xicc,2)-pow(pz_Xicc,2));
-//cout << "here " << endl;
   Double_t px_Merge[6] = {px_proton,px_kaon,px_pion,px_spion,px_Xic,px_Xicc}; fhSparsePx->Fill(px_Merge);
   Double_t py_Merge[6] = {py_proton,py_kaon,py_pion,py_spion,py_Xic,py_Xicc}; fhSparsePy->Fill(py_Merge);
   Double_t pz_Merge[6] = {pz_proton,pz_kaon,pz_pion,pz_spion,pz_Xic,pz_Xicc}; fhSparsePz->Fill(pz_Merge);
   Double_t pT_Merge[6] = {pT_proton,pT_kaon,pT_pion,pT_spion,pT_Xic,pT_Xicc}; fhSparsePT->Fill(pT_Merge);
   Double_t m_Merge[6] = {m_proton,m_kaon,m_pion,m_spion,m_Xic,m_Xicc}; fhSparseM->Fill(m_Merge);
   Double_t Y_Merge[4] = {Y_proton,Y_kaon,Y_pion,Y_spion}; fhSparseY->Fill(Y_Merge);
-//cout << "here2" << endl;
   return;
 }
 
@@ -607,7 +638,7 @@ void AliAnalysisTaskSEXiccTopKpipi::RecoEvent(){
     fMotherPdg.clear();
 
     // loop on particles
-    Printf("N PARTICLES %d",npart);
+    //Printf("N PARTICLES %d",npart);
     for(int i=0; i<npart; i++){
 
         Int_t pdgPart=-1;
@@ -721,12 +752,19 @@ void AliAnalysisTaskSEXiccTopKpipi::RecoEvent(){
             esdTr->SetStatus(AliESDtrack::kTPCin|AliESDtrack::kTPCout|AliESDtrack::kTPCrefit|AliESDtrack::kITSrefit);
 				esdTr->SetTRDntracklets((UChar_t)nhistassigned);
             esdTr->SetLabel(i);
+				//esdTr->Print("opt");
 			//	Printf("i track = %d part = %s",i,part->GetName());
-		cout << "Track Info : " << esdTr->GetPID() << endl;
+//		cout << "Track Info : " << esdTr->GetPID() << endl;
+		//cout << "Mass before1 : " << esdTr->GetMass() << " Mass before2 : "<<esdTr->GetMassForTracking()<<endl;
             double dum = fEvent->AddTrack(esdTr);
-				cout << "Track ID " << dum << endl;
+        //if(fabs(esdTr->GetMass()-ProtonMass)<0.1) esdTr->SetPIDForTracking(4);
+        //if(fabs(esdTr->GetMass()-PionMass)<0.1) esdTr->SetPIDForTracking(2);
+        //if(fabs(esdTr->GetMass()-KaonMass)<0.1) esdTr->SetPIDForTracking(3);
+
+//		cout << "TrackNumber : " << dum << endl;
 				AliESDtrack *trkdum = (AliESDtrack*) fEvent->GetTrack(dum);
-				cout << "Track PID " << trkdum->GetPID() << endl;
+//				cout << "Track PID " << trkdum->GetPID() << endl;
+		 //cout << "Mass after1 : " << trkdum->GetMass() << " Mass after2 : "<<trkdum->GetMassForTracking()<<endl;
             const TBits &hits = esdTr->GetTPCClusterMap();
             Int_t nhits=0;
             for (int ilr=0;ilr<fITS->GetNActiveLayers();ilr++) {
@@ -760,7 +798,7 @@ void AliAnalysisTaskSEXiccTopKpipi::RecoEvent(){
     AliESDVertex myVtx(posVtx,sigmaVtx,"Vertex");
     fEvent->SetPrimaryVertexTracks(&myVtx);
 
-    printf("number of reco tracks: %d",fEvent->GetNumberOfTracks());
+    //printf("number of reco tracks: %d",fEvent->GetNumberOfTracks());
 
     //delete esdVtx;
     //delete myVtx;

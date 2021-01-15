@@ -73,6 +73,7 @@ public:
     Bool_t IsSelected(Int_t CutFlag, AliESDtrack *trk);
     Bool_t FillHistoXic();
     Bool_t FillHistoXicc();
+    Double_t GetCorrectedMass(AliESDtrack *trk);
     AliESDVertex* CallReconstructSecondaryVertexXic(Double_t &dispersion);
     AliESDVertex* CallReconstructSecondaryVertexXicc(Double_t &dispersion);
 
@@ -125,6 +126,10 @@ vector<int> fMotherPdg;
     Int_t                  fKaonCuts;
     Int_t                  fPionCuts;
     Int_t                  fSoftPionCuts;
+		Int_t nProton; 
+		Int_t nKaon; 
+		Int_t nPion; 
+		Int_t nSoftPion;
 
     TArrayI                 *fProtonTrackArray;
     TArrayI                 *fKaonTrackArray;
