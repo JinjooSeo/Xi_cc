@@ -309,10 +309,17 @@ fNcounters->GetXaxis()->SetBinLabel(8,"Reco #Omega^{c}");
     fOutput->SetOwner();
     fOutput->SetName("listOutput");
 
+<<<<<<< HEAD
     fProtonTrackArray = new TArrayI(1000);
     fKaonTrackArray = new TArrayI(1000);
     fPionTrackArray = new TArrayI(2000);
     fSoftPionTrackArray = new TArrayI(2000);
+=======
+    fProtonTrackArray = new TArrayI(3500);
+    fKaonTrackArray = new TArrayI(3500);
+    fPionTrackArray = new TArrayI(3500);
+    fSoftPionTrackArray = new TArrayI(3500);
+>>>>>>> 4b703f03bdbc5c9a0ece5640c79571bcd561b573
 
 	fProtonCuts = 1;
 	fKaonCuts = 2;
@@ -507,22 +514,38 @@ Bool_t AliAnalysisTaskSEXiccTopKpipi::IsSelected(Int_t CutFlag, AliESDtrack *trk
 
   if(CutFlag==1){ //Proton candidate
     //if(fPIDResponse->GetNumberOfSigmasTPC(trk,AliPID::kProton)>4) return kFALSE;
+<<<<<<< HEAD
     if(TMath::Abs(GetCorrectedMass(trk)-TDatabasePDG::Instance()->GetParticle(2212)->Mass())>0.05) return kFALSE;
+=======
+    if(TMath::Abs(trk->GetMass()-TDatabasePDG::Instance()->GetParticle(2212)->Mass())>0.05) return kFALSE;
+>>>>>>> 4b703f03bdbc5c9a0ece5640c79571bcd561b573
     return kTRUE;
   }
   else if(CutFlag==2){ //Kaon candidate
     //if(fPIDResponse->GetNumberOfSigmasTPC(trk,AliPID::kKaon)>4) return kFALSE;
+<<<<<<< HEAD
     if(TMath::Abs(GetCorrectedMass(trk)-TDatabasePDG::Instance()->GetParticle(321)->Mass())>0.05) return kFALSE;
+=======
+    if(TMath::Abs(trk->GetMass()-TDatabasePDG::Instance()->GetParticle(321)->Mass())>0.05) return kFALSE;
+>>>>>>> 4b703f03bdbc5c9a0ece5640c79571bcd561b573
     return kTRUE;
   }
   else if(CutFlag==3){ //Pion candidate
     //if(fPIDResponse->GetNumberOfSigmasTPC(trk,AliPID::kPion)>2) return kFALSE;  //to seperate pion and electron
+<<<<<<< HEAD
     if(TMath::Abs(GetCorrectedMass(trk)-TDatabasePDG::Instance()->GetParticle(211)->Mass())>0.05) return kFALSE;
+=======
+    if(TMath::Abs(trk->GetMass()-TDatabasePDG::Instance()->GetParticle(211)->Mass())>0.05) return kFALSE;
+>>>>>>> 4b703f03bdbc5c9a0ece5640c79571bcd561b573
     return kTRUE;
   }
   else if(CutFlag==4){ //Soft pion candidate
     //if(fPIDResponse->GetNumberOfSigmasTPC(trk,AliPID::kPion)>2) return kFALSE;  //to seperate pion and electron
+<<<<<<< HEAD
     if(TMath::Abs(GetCorrectedMass(trk)-TDatabasePDG::Instance()->GetParticle(211)->Mass())>0.05) return kFALSE;
+=======
+    if(TMath::Abs(trk->GetMass()-TDatabasePDG::Instance()->GetParticle(211)->Mass())>0.05) return kFALSE;
+>>>>>>> 4b703f03bdbc5c9a0ece5640c79571bcd561b573
     return kTRUE;
   }
   else{
@@ -752,6 +775,7 @@ void AliAnalysisTaskSEXiccTopKpipi::RecoEvent(){
             esdTr->SetStatus(AliESDtrack::kTPCin|AliESDtrack::kTPCout|AliESDtrack::kTPCrefit|AliESDtrack::kITSrefit);
 				esdTr->SetTRDntracklets((UChar_t)nhistassigned);
             esdTr->SetLabel(i);
+<<<<<<< HEAD
 				//esdTr->Print("opt");
 			//	Printf("i track = %d part = %s",i,part->GetName());
 //		cout << "Track Info : " << esdTr->GetPID() << endl;
@@ -765,6 +789,14 @@ void AliAnalysisTaskSEXiccTopKpipi::RecoEvent(){
 				AliESDtrack *trkdum = (AliESDtrack*) fEvent->GetTrack(dum);
 //				cout << "Track PID " << trkdum->GetPID() << endl;
 		 //cout << "Mass after1 : " << trkdum->GetMass() << " Mass after2 : "<<trkdum->GetMassForTracking()<<endl;
+=======
+			//	Printf("i track = %d part = %s",i,part->GetName());
+		cout << "Track Info : " << esdTr->GetPID() << endl;
+            double dum = fEvent->AddTrack(esdTr);
+				cout << "Track ID " << dum << endl;
+				AliESDtrack *trkdum = (AliESDtrack*) fEvent->GetTrack(dum);
+				cout << "Track PID " << trkdum->GetPID() << endl;
+>>>>>>> 4b703f03bdbc5c9a0ece5640c79571bcd561b573
             const TBits &hits = esdTr->GetTPCClusterMap();
             Int_t nhits=0;
             for (int ilr=0;ilr<fITS->GetNActiveLayers();ilr++) {
