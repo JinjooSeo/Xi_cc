@@ -19,7 +19,7 @@ Bool_t generateOmega=kFALSE;
 Bool_t generateKaon=kFALSE;
 Bool_t generateOmegaccc=kTRUE;
 Bool_t addPYTHIAevent=kTRUE;
-Bool_t addHIJINGevent=kFALSE;
+Bool_t addHIJINGevent=kTRUE;
 
 // generator configuration
 Float_t bminConfig=0.;
@@ -36,7 +36,7 @@ void ForceMultiHFLS4Upgrade(AliTPythia8 *pythia8);
 
 AliRun *gAlice = new AliRun("test","");
 /*******************************************************/
-void testGeneratorXicc(Int_t nev = 1){
+void testGeneratorXicc(Int_t nev = 50000){
 
     //`export PYTHIA8DATA="/Users/jinjooseo/alice/AliRoot/PYTHIA8/pythia8210/share/Pythia8/xmldoc"
     //export PYTHIA8="/Users/jinjooseo/alice/AliRoot/PYTHIA8/pythia8210"
@@ -256,7 +256,7 @@ AliGenCocktail *Generator(){
     AliGenerator *py = GeneratorPythia8();
     if(addPYTHIAevent) gen->AddGenerator(py,"PYTHIA",1.);
 
-    AliGenParam *omegaccc = new AliGenParam(1000, new AliGenITSULib(), 4422, "DIST");//4332, "DIST");//4444, "DIST");
+    AliGenParam *omegaccc = new AliGenParam(5,new AliGenITSULib(), 4422, "DIST");//4332, "DIST");//4444, "DIST");
     //AliGenParam *omegaccc = new AliGenParam(1000, 4422);//4332, "DIST");//4444, "DIST");
 		AliTPythia8* pythia8 = AliTPythia8::Instance();
    /* pythia8->ReadString("4444:onMode = off");

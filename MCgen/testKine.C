@@ -39,7 +39,7 @@ void testKine(){
     Int_t nomegaccc=0;
 
     // Event loop
-    for(Int_t iEvent=0; iEvent<maxevent; iEvent++){
+    for(Int_t iEvent=0; iEvent<10; iEvent++){
 
         //Load Event
         rl->GetEvent(iEvent);
