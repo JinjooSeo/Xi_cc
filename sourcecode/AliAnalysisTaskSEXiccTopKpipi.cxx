@@ -808,7 +808,7 @@ void AliAnalysisTaskSEXiccTopKpipi::FillRecoXiccTree(AliESDtrack* spion, AliESDt
   fRecoXiccTreeVariable[43] = mckaon->R();
 
 
-  fRecoXiccTreeVariable->Fill();
+  fRecoXiccTree->Fill();
 }
 
 void AliAnalysisTaskSEXiccTopKpipi::DefineRecoTrackTree(){

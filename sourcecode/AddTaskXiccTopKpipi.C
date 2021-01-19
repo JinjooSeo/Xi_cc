@@ -42,15 +42,13 @@ AliAnalysisTaskSEXiccTopKpipi *AddTaskXiccTopKpipi()
     outputfile += ":MCanalysis";
 
     AliAnalysisDataContainer *coutputEntries = mgr->CreateContainer(histoname,TH1F::Class(),AliAnalysisManager::kOutputContainer,outputfile.Data());
-    AliAnalysisDataContainer *coutputCounters = mgr->CreateContainer(histocounters,TH1F::Class(),AliAnalysisManager::kOutputContainer,outputfile.Data());
     AliAnalysisDataContainer *coutputListGen = mgr->CreateContainer(listnamegen,TList::Class(),AliAnalysisManager::kOutputContainer,outputfile.Data());
-    AliAnalysisDataContainer *coutputListReco = mgr->CreateContainer(listnamereco,TList::Class(),AliAnalysisManager::kOutputContainer,outputfile.Data());
-    AliAnalysisDataContainer *coutputTreeCutVarGen = mgr->CreateContainer("coutputTreeCutVarGen",TTree::Class(),AliAnalysisManager::kOutputContainer,outputfile.Data());
-    coutputTreeCutVarGen->SetSpecialOutput();
-    AliAnalysisDataContainer *coutputTreeCutVarReco = mgr->CreateContainer("coutputTreeCutVarReco",TTree::Class(),AliAnalysisManager::kOutputContainer,outputfile.Data());
-    coutputTreeCutVarReco->SetSpecialOutput();
-    AliAnalysisDataContainer *coutputTreeCutVarRecoTrack = mgr->CreateContainer("coutputTreeCutVarRecoTrack",TTree::Class(),AliAnalysisManager::kOutputContainer,outputfile.Data());
-    coutputTreeCutVarRecoTrack->SetSpecialOutput();
+    AliAnalysisDataContainer *coutputTreeCutVarGen = mgr->CreateContainer(treenamecutvarcc,TTree::Class(),AliAnalysisManager::kOutputContainer,outputfile.Data());
+    //coutputTreeCutVarGen->SetSpecialOutput();
+    AliAnalysisDataContainer *coutputTreeCutVarReco = mgr->CreateContainer(treenamecutvarc,TTree::Class(),AliAnalysisManager::kOutputContainer,outputfile.Data());
+    //coutputTreeCutVarReco->SetSpecialOutput();
+    AliAnalysisDataContainer *coutputTreeCutVarRecoTrack = mgr->CreateContainer(treenamereconstruction,TTree::Class(),AliAnalysisManager::kOutputContainer,outputfile.Data());
+    //coutputTreeCutVarRecoTrack->SetSpecialOutput();
 
 
 
