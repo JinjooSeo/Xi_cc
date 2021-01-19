@@ -306,51 +306,9 @@ void runAnalysis_v2()
 //AliAnalysisTaskPIDResponse* PIDresponseTask = reinterpret_cast<AliAnalysisTaskPIDResponse*>(PIDadd.Exec());
 
 
-    // compile the class and load the add task macro
-    // here we have to differentiate between using the just-in-time compiler
-    // from root6, or the interpreter of root5
-#if !defined (__CINT__) || defined (__CLING__)
     gInterpreter->LoadMacro("./R5Detector.cxx++g");
-    gInterpreter->LoadMacro("./AliAnalysisTaskWeakDecayVertexer_mod.cxx++g");
-    //gInterpreter->LoadMacro("AliRecoDecayOmegac.cxx++g");
-    //gInterpreter->LoadMacro("AliRecoDecayOmegacc.cxx++g");
-    //gInterpreter->LoadMacro("AliRecoDecayOmegaccc.cxx++g");
-    //if(isOutTree){
       gInterpreter->LoadMacro("AliAnalysisTaskSEXiccTopKpipi.cxx++g");
-      //AliAnalysisTaskSEOmegacccToOmega3Pi *task = reinterpret_cast<AliAnalysisTaskSEOmegacccToOmega3Pi*>(gInterpreter->ProcessLine(Form(".x %s",gSystem->ExpandPathName("AddTaskOmegacccToOmega3Pi.C"))));
-      AliAnalysisTaskSEXiccTopKpipi *task = reinterpret_cast<AliAnalysisTaskSEXiccTopKpipi*>(gInterpreter->ExecuteMacro("AddTaskOmegacccToOmega3Pi.C"));
-      //task->SetFillTree(true,true,true,true,true,true,true,true);
-   // }
-    //if(isOutNorm){
-      //gInterpreter->LoadMacro("AliAnalysisTaskSENormCounterOmegaccc.cxx++g");
-      //AliAnalysisTaskSEOmegacccToOmega3Pi *task = reinterpret_cast<AliAnalysisTaskSEOmegacccToOmega3Pi*>(gInterpreter->ProcessLine(Form(".x %s",gSystem->ExpandPathName("AddTaskOmegacccToOmega3Pi.C"))));
-    //  AliAnalysisTaskSENormCounterOmegaccc *task = reinterpret_cast<AliAnalysisTaskSENormCounterOmegaccc*>(gInterpreter->ExecuteMacro("AddTaskNormCounterOmegaccc.C"));
-   // }
-
-#else
-    gROOT->LoadMacro("R5Detector.cxx++g");
-    gROOT->LoadMacro("AliAnalysisTaskWeakDecayVertexer_mod.cxx++g");
-    gROOT->LoadMacro("AliRecoDecayOmegac.cxx++g");
-    gROOT->LoadMacro("AliRecoDecayOmegacc.cxx++g");
-    gROOT->LoadMacro("AliRecoDecayOmegaccc.cxx++g");
-    if(isOutTree){
-      gROOT->LoadMacro("AliAnalysisTaskSEOmegacccToOmega3Pi.cxx++g");
-      gROOT->LoadMacro("AddTaskOmegacccToOmega3Pi.C");
-      AliAnalysisTaskSEOmegacccToOmega3Pi *task = AddTaskOmegacccToOmega3Pi();
-      task->SetFillTree(false,false,false,false,false,true,false,false);
-    }
-    if(isOutNorm){
-      gROOT->LoadMacro("AliAnalysisTaskSENormCounterOmegaccc.cxx++g");
-      gROOT->LoadMacro("AddTaskNormCounterOmegaccc.C");
-      AliAnalysisTaskSENormCounterOmegaccc *task = AddTaskNormCounterOmegaccc();
-    }
-
-
-#endif
-		//gROOT->ProcessLine(Form(".include %s","$ALICE_PHYSICS/OADB/macros/"));                
-			//gInterpreter->Declare("#include \"AddTaskPhysicsSelection.C\"");                      
-			//	if (foption.Contains("MC")) physSelTask = AddTaskPhysicsSelection(1);                 
-			//		else physSelTask = AddTaskPhysicsSelection(0);                                        
+      AliAnalysisTaskSEXiccTopKpipi *task = reinterpret_cast<AliAnalysisTaskSEXiccTopKpipi*>(gInterpreter->ExecuteMacro("AddTaskXiccTopKpipi.C"));
 
     if(!mgr->InitAnalysis()) return;
     mgr->SetDebugLevel(0);

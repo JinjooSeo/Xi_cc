@@ -17,8 +17,8 @@
 
 /////////////////////////////////////////////////////////////
 //
-// \authors: Andrea Festanti
-// \email:   andrea.festanti@cern.ch
+// \authors: Jinjoo Seo
+// \email: jseo@cern.ch
 //
 ////////////////////////////////////////////////////////////
 
@@ -115,10 +115,16 @@ fhSparsePz(0x0),
 fhSparsePT(0x0),
 fhSparseY(0x0),
 fhSparseM(0x0),
-nProton(0), 
-nKaon(0),   
-nPion(0),   
-nSoftPion(0)
+nProton(0),
+nKaon(0),
+nPion(0),
+nSoftPion(0),
+fGenXiccTree(0x0),
+fGenXiccTreeVariable(0),
+fRecoXiccTree(0x0),
+fRecoXiccTreeVariable(0),
+fRecoTrackTree(0x0),
+fRecoTrackTreeVariable(0)
 {
     /// Default constructor
 }
@@ -151,10 +157,16 @@ fhSparsePz(0x0),
 fhSparsePT(0x0),
 fhSparseY(0x0),
 fhSparseM(0x0),
-nProton(0),  
-nKaon(0), 
-nPion(0),  
-nSoftPion(0)
+nProton(0),
+nKaon(0),
+nPion(0),
+nSoftPion(0),
+fGenXiccTree(0x0),
+fGenXiccTreeVariable(0),
+fRecoXiccTree(0x0),
+fRecoXiccTreeVariable(0),
+fRecoTrackTree(0x0),
+fRecoTrackTreeVariable(0)
 {
     /// Default constructor
 
@@ -163,6 +175,8 @@ nSoftPion(0)
   DefineOutput(1,TH1F::Class());
   DefineOutput(2,TList::Class());
   DefineOutput(3,TTree::Class());
+  DefineOutput(4,TTree::Class());
+  DefineOutput(5,TTree::Class());
 }
 //________________________________________________________________________
 AliAnalysisTaskSEXiccTopKpipi::~AliAnalysisTaskSEXiccTopKpipi()
@@ -247,6 +261,18 @@ AliAnalysisTaskSEXiccTopKpipi::~AliAnalysisTaskSEXiccTopKpipi()
         delete fhSparseY;
         fhSparseY = 0x0;
     }
+    if (fGenXiccTree){
+        delete fGenXiccTree;
+        fGenXiccTree = 0x0;
+    }
+    if (fRecoXiccTree){
+        delete fRecoXiccTree;
+        fRecoXiccTree = 0x0;
+    }
+    if (fRecoTrackTree){
+        delete fRecoTrackTree;
+        fRecoTrackTree = 0x0;
+    }
 }
 
 //________________________________________________________________________
@@ -269,7 +295,9 @@ void AliAnalysisTaskSEXiccTopKpipi::UserCreateOutputObjects()
     fEvent = new AliESDEvent();
     fEvent->CreateStdContent();
 
- DefineTree();
+    DefineGenXiccTree();
+    DefineRecoXiccTree();
+    DefineRecoTrackTree();
 
     // create new ITS detector
     fITS = CreateDetector();
@@ -309,17 +337,10 @@ fNcounters->GetXaxis()->SetBinLabel(8,"Reco #Omega^{c}");
     fOutput->SetOwner();
     fOutput->SetName("listOutput");
 
-<<<<<<< HEAD
     fProtonTrackArray = new TArrayI(1000);
     fKaonTrackArray = new TArrayI(1000);
     fPionTrackArray = new TArrayI(2000);
     fSoftPionTrackArray = new TArrayI(2000);
-=======
-    fProtonTrackArray = new TArrayI(3500);
-    fKaonTrackArray = new TArrayI(3500);
-    fPionTrackArray = new TArrayI(3500);
-    fSoftPionTrackArray = new TArrayI(3500);
->>>>>>> 4b703f03bdbc5c9a0ece5640c79571bcd561b573
 
 	fProtonCuts = 1;
 	fKaonCuts = 2;
@@ -354,7 +375,9 @@ fNcounters->GetXaxis()->SetBinLabel(8,"Reco #Omega^{c}");
     // Post the data
     PostData(1,fNentries);
     PostData(2,fOutput);
-    PostData(3,fTree);
+    PostData(3,fGenXiccTree);
+    PostData(3,fRecoXiccTree);
+    PostData(3,fRecoTrackTree);
 
     return;
 }
@@ -378,10 +401,6 @@ void AliAnalysisTaskSEXiccTopKpipi::UserExec(Option_t */*option*/)
         Printf("ERROR: Could not retrieve MC event");
         return;
     }
-
-  //  AliInputEventHandler* inputHandler = (AliInputEventHandler*) AliAnalysisManager::GetAnalysisManager()->GetInputEventHandler();
-  //  fPIDResponse = (AliPIDResponse*) inputHandler->GetPIDResponse();
-//    if(!fPIDResponse) printf("AliAnalysisTaskSEXic0Semileptonic No PIDd\n");
 
     // create dummy vertex for beam diamond
     const double kBeamSig = 3e-4;//50e-4;
@@ -427,44 +446,42 @@ void AliAnalysisTaskSEXiccTopKpipi::Terminate(Option_t */*option*/)
 void AliAnalysisTaskSEXiccTopKpipi::MakeCandidates(){
 
   PrepareTracks();
-//cout << "hh" << endl;
+  FillRecoTrackTree();
+
   for(int i=0; i<nProton; i++){ //for(int i=0; i<nProton; i++){
-    //if(fProtonTrackArray->At(i)==-999) continue;
     AliESDtrack* fProtonTrack = (AliESDtrack*)fEvent->GetTrack(fProtonTrackArray->At(i));
 
     for(int j=0; j<nKaon; j++){ //for(int j=0; j<nKaon; j++){
-      //if(fKaonTrackArray->At(j)==-999) continue;
       AliESDtrack* fKaonTrack = (AliESDtrack*)fEvent->GetTrack(fKaonTrackArray->At(j));
 
       if(fKaonTrack->Charge()*fProtonTrack->Charge()>=0) continue;
       if(fKaonTrack->GetID()==fProtonTrack->GetID()) continue;
 
       for(int k=0; k<nPion; k++){ //for(int k=0; k<nPion; k++){
-        //if(fPionTrackArray->At(k)==-999) continue;
         AliESDtrack* fPionTrack = (AliESDtrack*)fEvent->GetTrack(fPionTrackArray->At(k));
-        
-		if(fPionTrack->Charge()*fKaonTrack->Charge()>=0) continue;
+
+        if(fPionTrack->Charge()*fKaonTrack->Charge()>=0) continue;
         if(fPionTrack->Charge()*fProtonTrack->Charge()<=0) continue;
         if(fPionTrack->GetID()==fKaonTrack->GetID()) continue;
         if(fPionTrack->GetID()==fProtonTrack->GetID()) continue;
 
-		for(int l=0; l<nPion; l++){ //for(int k=0; k<nPion; k++){
-          //if(fSoftPionTrackArray->At(l)==-999) continue;
-          AliESDtrack* fSoftPionTrack = (AliESDtrack*)fEvent->GetTrack(fSoftPionTrackArray->At(l));
-		  if(fSoftPionTrack->Charge()*fProtonTrack->Charge()<=0) continue;
-		  if(fSoftPionTrack->Charge()*fKaonTrack->Charge()>=0) continue;
-          if(fSoftPionTrack->Charge()*fPionTrack->Charge()<=0) continue;
-		  if(fSoftPionTrack->GetID()==fKaonTrack->GetID()) continue;
-          if(fSoftPionTrack->GetID()==fProtonTrack->GetID()) continue;
-		  if(fSoftPionTrack->GetID()==fPionTrack->GetID()) continue;
+		      for(int l=0; l<nPion; l++){ //for(int k=0; k<nPion; k++){
+            AliESDtrack* fSoftPionTrack = (AliESDtrack*)fEvent->GetTrack(fSoftPionTrackArray->At(l));
+		        if(fSoftPionTrack->Charge()*fProtonTrack->Charge()<=0) continue;
+		        if(fSoftPionTrack->Charge()*fKaonTrack->Charge()>=0) continue;
+            if(fSoftPionTrack->Charge()*fPionTrack->Charge()<=0) continue;
+		        if(fSoftPionTrack->GetID()==fKaonTrack->GetID()) continue;
+            if(fSoftPionTrack->GetID()==fProtonTrack->GetID()) continue;
+		        if(fSoftPionTrack->GetID()==fPionTrack->GetID()) continue;
 		 // cout << "FILL!!----------------------------------------------------------------" << endl;
-          FillXiccHistogram(fProtonTrack,fKaonTrack,fPionTrack,fSoftPionTrack);
+            FillRecoXiccTree(fSoftPionTrack,fProtonTrack,fKaonTrack,fPionTrack);
+            FillXiccHistogram(fProtonTrack,fKaonTrack,fPionTrack,fSoftPionTrack);
           //FillXiccTree(fProtonTrack,fKaonTrack,fPionTrack,fSoftPionTrack);
         }//l
       }//k
     }//j
   }//i
-    return;
+  return;
 }
 //________________________________________________________________________
 void AliAnalysisTaskSEXiccTopKpipi::PrepareTracks(){
@@ -514,38 +531,22 @@ Bool_t AliAnalysisTaskSEXiccTopKpipi::IsSelected(Int_t CutFlag, AliESDtrack *trk
 
   if(CutFlag==1){ //Proton candidate
     //if(fPIDResponse->GetNumberOfSigmasTPC(trk,AliPID::kProton)>4) return kFALSE;
-<<<<<<< HEAD
-    if(TMath::Abs(GetCorrectedMass(trk)-TDatabasePDG::Instance()->GetParticle(2212)->Mass())>0.05) return kFALSE;
-=======
     if(TMath::Abs(trk->GetMass()-TDatabasePDG::Instance()->GetParticle(2212)->Mass())>0.05) return kFALSE;
->>>>>>> 4b703f03bdbc5c9a0ece5640c79571bcd561b573
     return kTRUE;
   }
   else if(CutFlag==2){ //Kaon candidate
     //if(fPIDResponse->GetNumberOfSigmasTPC(trk,AliPID::kKaon)>4) return kFALSE;
-<<<<<<< HEAD
-    if(TMath::Abs(GetCorrectedMass(trk)-TDatabasePDG::Instance()->GetParticle(321)->Mass())>0.05) return kFALSE;
-=======
     if(TMath::Abs(trk->GetMass()-TDatabasePDG::Instance()->GetParticle(321)->Mass())>0.05) return kFALSE;
->>>>>>> 4b703f03bdbc5c9a0ece5640c79571bcd561b573
     return kTRUE;
   }
   else if(CutFlag==3){ //Pion candidate
     //if(fPIDResponse->GetNumberOfSigmasTPC(trk,AliPID::kPion)>2) return kFALSE;  //to seperate pion and electron
-<<<<<<< HEAD
-    if(TMath::Abs(GetCorrectedMass(trk)-TDatabasePDG::Instance()->GetParticle(211)->Mass())>0.05) return kFALSE;
-=======
     if(TMath::Abs(trk->GetMass()-TDatabasePDG::Instance()->GetParticle(211)->Mass())>0.05) return kFALSE;
->>>>>>> 4b703f03bdbc5c9a0ece5640c79571bcd561b573
     return kTRUE;
   }
   else if(CutFlag==4){ //Soft pion candidate
     //if(fPIDResponse->GetNumberOfSigmasTPC(trk,AliPID::kPion)>2) return kFALSE;  //to seperate pion and electron
-<<<<<<< HEAD
-    if(TMath::Abs(GetCorrectedMass(trk)-TDatabasePDG::Instance()->GetParticle(211)->Mass())>0.05) return kFALSE;
-=======
     if(TMath::Abs(trk->GetMass()-TDatabasePDG::Instance()->GetParticle(211)->Mass())>0.05) return kFALSE;
->>>>>>> 4b703f03bdbc5c9a0ece5640c79571bcd561b573
     return kTRUE;
   }
   else{
@@ -561,7 +562,7 @@ Double_t AliAnalysisTaskSEXiccTopKpipi::GetCorrectedMass(AliESDtrack *trk){
   Double_t px = P[0];
   Double_t py = P[1];
   Double_t pz = P[2];
-  Double_t E = trk->E(); 
+  Double_t E = trk->E();
   Double_t CorrectedM = sqrt(E*E-px*px-py*py-pz*pz);
 
   return CorrectedM;
@@ -624,20 +625,246 @@ void AliAnalysisTaskSEXiccTopKpipi::FillXiccHistogram(AliESDtrack *proton, AliES
   return;
 }
 
-void AliAnalysisTaskSEXiccTopKpipi::DefineTree(){
-  fTree = new TTree("fTree","fTree");
-  vector <TString> fTreeVariableName = {"px_Xicc","py_Xicc","pz_Xicc","charge_Xicc","mass_Xicc","pT_Xicc",
-    "px_Xic","py_Xic","pz_Xic","charge_Xic","mass_Xic","pT_Xic",
-    "px_spion","py_spion","pz_spion","charge_spion","mass_spion","pT_spion",
-    "px_proton","py_proton","pz_proton","charge_proton","mass_proton","pT_proton",
-    "px_kaon","py_kaon","pz_kaon","charge_kaon","mass_kaon","pT_kaon",
-    "px_pion","py_pion","pz_pion","charge_pion","mass_pion","pT_pion",
+void AliAnalysisTaskSEXiccTopKpipi::DefineGenXiccTree(){
+  fGenXiccTree = new TTree("fGenXiccTree","fGenXiccTree");
+  vector <TString> fTreeVariableName = {"px_Xicc","py_Xicc","pz_Xicc","mass_Xicc","pT_Xicc","y_Xicc","Phi_Xicc","Rxy_Xicc",
+    "px_Xic","py_Xic","pz_Xic","mass_Xic","pT_Xic","y_Xic","Phi_Xic","Rxy_Xic",
+    "px_spion","py_spion","pz_spion","mass_spion","pT_spion","y_spion","Phi_spion","Rxy_spion",
+    "px_proton","py_proton","pz_proton","mass_proton","pT_proton","y_proton","Phi_proton","Rxy_proton",
+    "px_kaon","py_kaon","pz_kaon","mass_kaon","pT_kaon","y_kaon","Phi_kaon","Rxy_kaon",
+    "px_pion","py_pion","pz_pion","mass_pion","pT_pion","y_pion","Phi_pion","Rxy_pion",
     "PA_spionXic","SecondaryVertex","DecayLengthXY","Chi2perNDF"};
-  fTreeVariable = new Float_t [fTreeVariableName.size()];
+  fGenXiccTreeVariable = new Float_t [fTreeVariableName.size()];
 
-  for (Int_t ivar=0; ivar<(Float_t)fTreeVariableName.size(); ivar++) fTree->Branch(fTreeVariableName[ivar].Data(),&fTreeVariable[ivar],Form("%s/f",fTreeVariableName[ivar].Data()));
+  for (Int_t ivar=0; ivar<(Float_t)fTreeVariableName.size(); ivar++) fTree->Branch(fTreeVariableName[ivar].Data(),&fGenXiccTreeVariable[ivar],Form("%s/f",fTreeVariableName[ivar].Data()));
 
   return;
+}
+
+void AliAnalysisTaskSEXiccTopKpipi::FillGenXiccTree(TParticle* mcXicc){
+  if(TMath::Abs(mcXicc->GetPdgCode())!=4422) return;
+
+  TParticle* mcXic;
+  TParticle* mcspion;
+  TParticle* mcproton;
+  TParticle* mckaon;
+  TParticle* mcpion;
+
+  for(int i=0; i<mcXicc->GetNDaughters(); i++){
+    TParticle* mcpart = fMcEvent->Particle(mcXicc->GetDaughter(i));
+    if(mcpart->GetPdg()==211) mcspion = mcpart;
+    if(mcpart->GetPdg()==4232){
+      mcXic = mcpart;
+      for(int j=0; j<mcXic->GetNDaughters(); j++){
+        TParticle* mcpart2 = fMcEvent->Particle(mcXic->GetDaughter(i));
+        if(mcpart2->GetPdg()==2212) mcproton = mcpart2;
+        if(mcpart2->GetPdg()==2321) mckaon = mcpart2;
+        if(mcpart2->GetPdg()==211) mcpion = mcpart2;
+      }
+    }
+  }
+
+  fGenXiccTreeVariable[0] = mcXicc->Px();
+  fGenXiccTreeVariable[1] = mcXicc->Py();
+  fGenXiccTreeVariable[2] = mcXicc->Pz();
+  fGenXiccTreeVariable[3] = mcXicc->GetMass();
+  fGenXiccTreeVariable[4] = mcXicc->Pt();
+  fGenXiccTreeVariable[5] = mcXicc->Y();
+  fGenXiccTreeVariable[6] = mcXicc->Phi();
+  fGenXiccTreeVariable[7] = mcXicc->R();
+  fGenXiccTreeVariable[8] = mcXic->Px();
+  fGenXiccTreeVariable[9] = mcXic->Py();
+  fGenXiccTreeVariable[10] = mcXic->Pz();
+  fGenXiccTreeVariable[11] = mcXic->GetMass();
+  fGenXiccTreeVariable[12] = mcXic->Pt();
+  fGenXiccTreeVariable[13] = mcXic->Y();
+  fGenXiccTreeVariable[14] = mcXic->Phi();
+  fGenXiccTreeVariable[15] = mcXic->R();
+  fGenXiccTreeVariable[16] = mcspion->Px();
+  fGenXiccTreeVariable[17] = mcspion->Py();
+  fGenXiccTreeVariable[18] = mcspion->Pz();
+  fGenXiccTreeVariable[19] = mcspion->GetMass();
+  fGenXiccTreeVariable[20] = mcspion->Pt();
+  fGenXiccTreeVariable[21] = mcspion->Y();
+  fGenXiccTreeVariable[22] = mcspion->Phi();
+  fGenXiccTreeVariable[23] = mcspion->R();
+  fGenXiccTreeVariable[24] = mcproton->Px();
+  fGenXiccTreeVariable[25] = mcproton->Py();
+  fGenXiccTreeVariable[26] = mcproton->Pz();
+  fGenXiccTreeVariable[27] = mcproton->GetMass();
+  fGenXiccTreeVariable[28] = mcproton->Pt();
+  fGenXiccTreeVariable[29] = mcproton->Y();
+  fGenXiccTreeVariable[30] = mcproton->Phi();
+  fGenXiccTreeVariable[31] = mcproton->R();
+  fGenXiccTreeVariable[32] = mckaon->Px();
+  fGenXiccTreeVariable[33] = mckaon->Py();
+  fGenXiccTreeVariable[34] = mckaon->Pz();
+  fGenXiccTreeVariable[35] = mckaon->GetMass();
+  fGenXiccTreeVariable[36] = mckaon->Pt();
+  fGenXiccTreeVariable[37] = mckaon->Y();
+  fGenXiccTreeVariable[38] = mckaon->Phi();
+  fGenXiccTreeVariable[39] = mckaon->R();
+
+  fGenXiccTreeVariable[40] = mckaon->Pt();
+  fGenXiccTreeVariable[41] = mckaon->Y();
+  fGenXiccTreeVariable[42] = mckaon->Phi();
+  fGenXiccTreeVariable[43] = mckaon->R();
+
+
+  fRecoXiccTree->Fill();
+}
+
+
+void AliAnalysisTaskSEXiccTopKpipi::DefineRecoXiccTree(){
+  fRecoXiccTree = new TTree("fRecoXiccTree","fRecoXiccTree");
+  vector <TString> fTreeVariableName = {"px_Xicc","py_Xicc","pz_Xicc","mass_Xicc","pT_Xicc","y_Xicc","Phi_Xicc","Rxy_Xicc",
+    "px_Xic","py_Xic","pz_Xic","mass_Xic","pT_Xic","y_Xic","Phi_Xic","Rxy_Xic",
+    "px_spion","py_spion","pz_spion","mass_spion","pT_spion","y_spion","Phi_spion","Rxy_spion",
+    "px_proton","py_proton","pz_proton","mass_proton","pT_proton","y_proton","Phi_proton","Rxy_proton",
+    "px_kaon","py_kaon","pz_kaon","mass_kaon","pT_kaon","y_kaon","Phi_kaon","Rxy_kaon",
+    "px_pion","py_pion","pz_pion","mass_pion","pT_pion","y_pion","Phi_pion","Rxy_pion",
+    "PA_spionXic","SecondaryVertex","DecayLengthXY","Chi2perNDF"};
+  fRecoXiccTreeVariable = new Float_t [fTreeVariableName.size()];
+
+  for (Int_t ivar=0; ivar<(Float_t)fTreeVariableName.size(); ivar++) fTree->Branch(fTreeVariableName[ivar].Data(),&fRecoXiccTreeVariable[ivar],Form("%s/f",fTreeVariableName[ivar].Data()));
+
+  return;
+}
+
+void AliAnalysisTaskSEXiccTopKpipi::FillRecoXiccTree(AliESDtrack* spion, AliESDtrack* proton, AliESDtrack* kaon, AliESDtrack* pion){
+  Int_t labspion = spion->GetLabel(); if(labspion==-1) return;
+  Int_t labproton = proton->GetLabel(); if(labproton==-1) return;
+  Int_t labkaon = kaon->GetLabel(); if(labkaon==-1) return;
+  Int_t labpion = pion->GetLabel(); if(labpion==-1) return;
+
+  TParticle* mcspion = fMcEvent->Particle(labspion);
+  TParticle* mcproton = fMcEvent->Particle(labproton);
+  TParticle* mckaon = fMcEvent->Particle(labkaon);
+  TParticle* mcpion = fMcEvent->Particle(labpion);
+
+  if(TMath::Abs(mcspion->GetPdgCode())!=211) return;
+  if(TMath::Abs(mcproton->GetPdgCode())!=2212) return;
+  if(TMath::Abs(mckaon->GetPdgCode())!=321) return;
+  if(TMath::Abs(mcpion->GetPdgCode())!=211) return;
+
+  if(mcproton->GetMother() != mckaon->GetMother()) return;
+  if(mcproton->GetMother() != mcpion->GetMother()) return;
+  if(mcproton->GetMother()==-1) return;
+
+  TParticle* mcXic = fMcEvent->Particle(mcproton->GetMother());
+  if(TMath::Abs(mcXic->GetPdgCode())!=4232) return;
+  if(mcXic->GetMother() != mcspion->GetMother()) return;
+  if(mcXic->GetMother()==-1) return;
+
+  TParticle* mcXicc = fMcEvent->Particle(mcXic->GetMother());
+  if(TMath::Abs(mcXicc->GetPdgCode())!=4422) return;
+
+  fRecoXiccTreeVariable[0] = mcXicc->Px();
+  fRecoXiccTreeVariable[1] = mcXicc->Py();
+  fRecoXiccTreeVariable[2] = mcXicc->Pz();
+  fRecoXiccTreeVariable[3] = mcXicc->GetMass();
+  fRecoXiccTreeVariable[4] = mcXicc->Pt();
+  fRecoXiccTreeVariable[5] = mcXicc->Y();
+  fRecoXiccTreeVariable[6] = mcXicc->Phi();
+  fRecoXiccTreeVariable[7] = mcXicc->R();
+  fRecoXiccTreeVariable[8] = mcXic->Px();
+  fRecoXiccTreeVariable[9] = mcXic->Py();
+  fRecoXiccTreeVariable[10] = mcXic->Pz();
+  fRecoXiccTreeVariable[11] = mcXic->GetMass();
+  fRecoXiccTreeVariable[12] = mcXic->Pt();
+  fRecoXiccTreeVariable[13] = mcXic->Y();
+  fRecoXiccTreeVariable[14] = mcXic->Phi();
+  fRecoXiccTreeVariable[15] = mcXic->R();
+  fRecoXiccTreeVariable[16] = mcspion->Px();
+  fRecoXiccTreeVariable[17] = mcspion->Py();
+  fRecoXiccTreeVariable[18] = mcspion->Pz();
+  fRecoXiccTreeVariable[19] = mcspion->GetMass();
+  fRecoXiccTreeVariable[20] = mcspion->Pt();
+  fRecoXiccTreeVariable[21] = mcspion->Y();
+  fRecoXiccTreeVariable[22] = mcspion->Phi();
+  fRecoXiccTreeVariable[23] = mcspion->R();
+  fRecoXiccTreeVariable[24] = mcproton->Px();
+  fRecoXiccTreeVariable[25] = mcproton->Py();
+  fRecoXiccTreeVariable[26] = mcproton->Pz();
+  fRecoXiccTreeVariable[27] = mcproton->GetMass();
+  fRecoXiccTreeVariable[28] = mcproton->Pt();
+  fRecoXiccTreeVariable[29] = mcproton->Y();
+  fRecoXiccTreeVariable[30] = mcproton->Phi();
+  fRecoXiccTreeVariable[31] = mcproton->R();
+  fRecoXiccTreeVariable[32] = mckaon->Px();
+  fRecoXiccTreeVariable[33] = mckaon->Py();
+  fRecoXiccTreeVariable[34] = mckaon->Pz();
+  fRecoXiccTreeVariable[35] = mckaon->GetMass();
+  fRecoXiccTreeVariable[36] = mckaon->Pt();
+  fRecoXiccTreeVariable[37] = mckaon->Y();
+  fRecoXiccTreeVariable[38] = mckaon->Phi();
+  fRecoXiccTreeVariable[39] = mckaon->R();
+
+  fRecoXiccTreeVariable[40] = mckaon->Pt();
+  fRecoXiccTreeVariable[41] = mckaon->Y();
+  fRecoXiccTreeVariable[42] = mckaon->Phi();
+  fRecoXiccTreeVariable[43] = mckaon->R();
+
+
+  fRecoXiccTree->Fill();
+}
+
+void AliAnalysisTaskSEXiccTopKpipi::DefineRecoTrackTree(){
+  fRecoTrackTree = new TTree("fRecoTrackTree","fRecoTrackTree");
+  vector <TString> fTreeVariableName = {"recoPt","recoPhi","recoEta","recoY","recoNhits","genPt","genEta","genRad","recoMClabel","pdgCodePart",
+    "pdgCodeMother","recoNReconstructableHits","recoMClabelMother","genPtMoth"};
+  fRecoTrackTreeVariable = new Float_t [fTreeVariableName.size()];
+
+  for (Int_t ivar=0; ivar<(Float_t)fTreeVariableName.size(); ivar++) fTree->Branch(fTreeVariableName[ivar].Data(),&fRecoTrackTreeVariable[ivar],Form("%s/f",fTreeVariableName[ivar].Data()));
+
+  return;
+}
+void AliAnalysisTaskSEXiccTopKpipi::FillRecoTrackTree(){
+    int ntr = fEvent->GetNumberOfTracks();
+    AliESDtrack* esdtr=0x0;
+    TParticle *mcPart=0x0;
+    for (int itr=0;itr<ntr;itr++) {
+        fNentries->Fill(6);
+        esdtr = fEvent->GetTrack(itr);
+        Float_t recoPt=esdtr->Pt();
+        Float_t recoEta=esdtr->Eta();
+        Float_t recoY=esdtr->Y();
+        Float_t recoPhi=esdtr->Phi();
+        Int_t recoHits = (Int_t)esdtr->GetTRDNclusterdEdx();
+        Int_t lbl=esdtr->GetLabel();
+
+        //corresponding generated particle
+        mcPart=fMcEvent->Particle(lbl);
+        Float_t genPt=mcPart->Pt();
+        Float_t genEta=mcPart->Eta();
+        Float_t genY=mcPart->Y();
+        Float_t genRad=mcPart->R();
+        Float_t genPtMoth=-1.;
+        int pdgCodePart=mcPart->GetPdgCode();
+        int lblMother = mcPart->GetFirstMother();
+        int pdgCodeMother = -99999;
+        if(lblMother>-1) {
+            pdgCodeMother = (fMcEvent->Particle(lblMother))->GetPdgCode();
+            genPtMoth = (fMcEvent->Particle(lblMother))->Pt();
+        }
+        //Fill histograms
+        fRecoTrackTreeVariable[0] = recoPt;
+        fRecoTrackTreeVariable[1] = recoPhi;
+        fRecoTrackTreeVariable[2] = recoEta;
+        fRecoTrackTreeVariable[3] = recoY;
+        fRecoTrackTreeVariable[4] = nhits;
+        fRecoTrackTreeVariable[5] = genPt;
+        fRecoTrackTreeVariable[6] = genEta;
+        fRecoTrackTreeVariable[7] = genRad;
+        fRecoTrackTreeVariable[8] = lbl;
+        fRecoTrackTreeVariable[9] = pdgCodePart;
+        fRecoTrackTreeVariable[10] = pdgCodeMother;
+        fRecoTrackTreeVariable[11] = recoHits;
+        fRecoTrackTreeVariable[12] = lblMother;
+        fRecoTrackTreeVariable[13] = genPtMoth;
+
+        fRecoTrackTree->Fill();
+    }
 }
 //________________________________________________________________________
 //________________________________________________________________________
@@ -687,6 +914,7 @@ void AliAnalysisTaskSEXiccTopKpipi::RecoEvent(){
         //part.get()
         part = (TParticle*)fMcEvent->Particle(i);//fStack->Particle(i);
         if(!part) {Printf("no part"); continue;}
+        FillGenXiccTree(part);
         fNentries->Fill(1);
         fNcounters->Fill(1);
         pdgPart = part->GetPdgCode();
@@ -775,28 +1003,12 @@ void AliAnalysisTaskSEXiccTopKpipi::RecoEvent(){
             esdTr->SetStatus(AliESDtrack::kTPCin|AliESDtrack::kTPCout|AliESDtrack::kTPCrefit|AliESDtrack::kITSrefit);
 				esdTr->SetTRDntracklets((UChar_t)nhistassigned);
             esdTr->SetLabel(i);
-<<<<<<< HEAD
-				//esdTr->Print("opt");
 			//	Printf("i track = %d part = %s",i,part->GetName());
-//		cout << "Track Info : " << esdTr->GetPID() << endl;
-		//cout << "Mass before1 : " << esdTr->GetMass() << " Mass before2 : "<<esdTr->GetMassForTracking()<<endl;
+		//cout << "Track Info : " << esdTr->GetPID() << endl;
             double dum = fEvent->AddTrack(esdTr);
-        //if(fabs(esdTr->GetMass()-ProtonMass)<0.1) esdTr->SetPIDForTracking(4);
-        //if(fabs(esdTr->GetMass()-PionMass)<0.1) esdTr->SetPIDForTracking(2);
-        //if(fabs(esdTr->GetMass()-KaonMass)<0.1) esdTr->SetPIDForTracking(3);
-
-//		cout << "TrackNumber : " << dum << endl;
+			//	cout << "Track ID " << dum << endl;
 				AliESDtrack *trkdum = (AliESDtrack*) fEvent->GetTrack(dum);
-//				cout << "Track PID " << trkdum->GetPID() << endl;
-		 //cout << "Mass after1 : " << trkdum->GetMass() << " Mass after2 : "<<trkdum->GetMassForTracking()<<endl;
-=======
-			//	Printf("i track = %d part = %s",i,part->GetName());
-		cout << "Track Info : " << esdTr->GetPID() << endl;
-            double dum = fEvent->AddTrack(esdTr);
-				cout << "Track ID " << dum << endl;
-				AliESDtrack *trkdum = (AliESDtrack*) fEvent->GetTrack(dum);
-				cout << "Track PID " << trkdum->GetPID() << endl;
->>>>>>> 4b703f03bdbc5c9a0ece5640c79571bcd561b573
+				//cout << "Track PID " << trkdum->GetPID() << endl;
             const TBits &hits = esdTr->GetTPCClusterMap();
             Int_t nhits=0;
             for (int ilr=0;ilr<fITS->GetNActiveLayers();ilr++) {
@@ -810,17 +1022,6 @@ void AliAnalysisTaskSEXiccTopKpipi::RecoEvent(){
             //fNentries->Fill(7);/* continue;*/
             isReco=false;
         }
-
-//        Printf("FILL Tree REconstruction: index=%d res=%d | %d %d | %f %f %f %f %f %f %f %f %f | %d %d %d",i,res,fParticleVarPdg,fParticleVarPdgMoth,fParticleVarPt,fParticleVarP,fParticleVarEta,fParticleVarRap,fParticleVarPhi,fParticleVarX,fParticleVarY,fParticleVarZ,fParticleVarRxy,fParticleVarNhitsAssigned,fParticleVarNhitsReco,fParticleVarIsReco);
-        //if(fIsMCSignalProd && fIsFillReconstrucion) fTreeReconstruction->Fill();
-//        esdTr = (AliESDtrack*)fITS->GetProbeTrackInwardAsESDTrack();
-//        esdTr->SetStatus(AliESDtrack::kTPCin|AliESDtrack::kTPCout|AliESDtrack::kTPCrefit|AliESDtrack::kITSrefit);
-//        esdTr->SetTRDntracklets((UChar_t)nhistassigned);
-//        esdTr->SetLabel(i);
-//        fEvent->AddTrack(esdTr);
-
-
-
     }// end loop over particles
     //AliESDUtils::RefitESDVertexTracks(esd);
     double posVtx[3]={0,0,0};
@@ -829,13 +1030,6 @@ void AliAnalysisTaskSEXiccTopKpipi::RecoEvent(){
     //AliESDVertex *myVtx = new AliESDVertex(posVtx,sigmaVtx,"Vertex");
     AliESDVertex myVtx(posVtx,sigmaVtx,"Vertex");
     fEvent->SetPrimaryVertexTracks(&myVtx);
-
-    //printf("number of reco tracks: %d",fEvent->GetNumberOfTracks());
-
-    //delete esdVtx;
-    //delete myVtx;
-
-
 }
 //________________________________________________________________________
 TString AliAnalysisTaskSEXiccTopKpipi::GetGenerator(Int_t label, AliGenCocktailEventHeader* header){
