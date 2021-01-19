@@ -636,7 +636,7 @@ void AliAnalysisTaskSEXiccTopKpipi::DefineGenXiccTree(){
     "PA_spionXic","SecondaryVertex","DecayLengthXY","Chi2perNDF"};
   fGenXiccTreeVariable = new Float_t [fTreeVariableName.size()];
 
-  for (Int_t ivar=0; ivar<(Float_t)fTreeVariableName.size(); ivar++) fTree->Branch(fTreeVariableName[ivar].Data(),&fGenXiccTreeVariable[ivar],Form("%s/f",fTreeVariableName[ivar].Data()));
+  for (Int_t ivar=0; ivar<(Float_t)fTreeVariableName.size(); ivar++) fGenXiccTree->Branch(fTreeVariableName[ivar].Data(),&fGenXiccTreeVariable[ivar],Form("%s/f",fTreeVariableName[ivar].Data()));
 
   return;
 }
@@ -652,14 +652,14 @@ void AliAnalysisTaskSEXiccTopKpipi::FillGenXiccTree(TParticle* mcXicc){
 
   for(int i=0; i<mcXicc->GetNDaughters(); i++){
     TParticle* mcpart = fMcEvent->Particle(mcXicc->GetDaughter(i));
-    if(mcpart->GetPdg()==211) mcspion = mcpart;
-    if(mcpart->GetPdg()==4232){
+    if(mcpart->GetPdgCode()==211) mcspion = mcpart;
+    if(mcpart->GetPdgCode()==4232){
       mcXic = mcpart;
       for(int j=0; j<mcXic->GetNDaughters(); j++){
         TParticle* mcpart2 = fMcEvent->Particle(mcXic->GetDaughter(i));
-        if(mcpart2->GetPdg()==2212) mcproton = mcpart2;
-        if(mcpart2->GetPdg()==2321) mckaon = mcpart2;
-        if(mcpart2->GetPdg()==211) mcpion = mcpart2;
+        if(mcpart2->GetPdgCode()==2212) mcproton = mcpart2;
+        if(mcpart2->GetPdgCode()==2321) mckaon = mcpart2;
+        if(mcpart2->GetPdgCode()==211) mcpion = mcpart2;
       }
     }
   }
@@ -726,7 +726,7 @@ void AliAnalysisTaskSEXiccTopKpipi::DefineRecoXiccTree(){
     "PA_spionXic","SecondaryVertex","DecayLengthXY","Chi2perNDF"};
   fRecoXiccTreeVariable = new Float_t [fTreeVariableName.size()];
 
-  for (Int_t ivar=0; ivar<(Float_t)fTreeVariableName.size(); ivar++) fTree->Branch(fTreeVariableName[ivar].Data(),&fRecoXiccTreeVariable[ivar],Form("%s/f",fTreeVariableName[ivar].Data()));
+  for (Int_t ivar=0; ivar<(Float_t)fTreeVariableName.size(); ivar++) fRecoXiccTree->Branch(fTreeVariableName[ivar].Data(),&fRecoXiccTreeVariable[ivar],Form("%s/f",fTreeVariableName[ivar].Data()));
 
   return;
 }
@@ -747,16 +747,16 @@ void AliAnalysisTaskSEXiccTopKpipi::FillRecoXiccTree(AliESDtrack* spion, AliESDt
   if(TMath::Abs(mckaon->GetPdgCode())!=321) return;
   if(TMath::Abs(mcpion->GetPdgCode())!=211) return;
 
-  if(mcproton->GetMother() != mckaon->GetMother()) return;
-  if(mcproton->GetMother() != mcpion->GetMother()) return;
-  if(mcproton->GetMother()==-1) return;
+  if(mcproton->GetFirstMother() != mckaon->GetFirstMother()) return;
+  if(mcproton->GetFirstMother() != mcpion->GetFirstMother()) return;
+  if(mcproton->GetFirstMother()==-1) return;
 
-  TParticle* mcXic = fMcEvent->Particle(mcproton->GetMother());
+  TParticle* mcXic = fMcEvent->Particle(mcproton->GetFirstMother());
   if(TMath::Abs(mcXic->GetPdgCode())!=4232) return;
-  if(mcXic->GetMother() != mcspion->GetMother()) return;
-  if(mcXic->GetMother()==-1) return;
+  if(mcXic->GetFirstMother() != mcspion->GetFirstMother()) return;
+  if(mcXic->GetFirstMother()==-1) return;
 
-  TParticle* mcXicc = fMcEvent->Particle(mcXic->GetMother());
+  TParticle* mcXicc = fMcEvent->Particle(mcXic->GetFirstMother());
   if(TMath::Abs(mcXicc->GetPdgCode())!=4422) return;
 
   fRecoXiccTreeVariable[0] = mcXicc->Px();
@@ -815,7 +815,7 @@ void AliAnalysisTaskSEXiccTopKpipi::DefineRecoTrackTree(){
     "pdgCodeMother","recoNReconstructableHits","recoMClabelMother","genPtMoth"};
   fRecoTrackTreeVariable = new Float_t [fTreeVariableName.size()];
 
-  for (Int_t ivar=0; ivar<(Float_t)fTreeVariableName.size(); ivar++) fTree->Branch(fTreeVariableName[ivar].Data(),&fRecoTrackTreeVariable[ivar],Form("%s/f",fTreeVariableName[ivar].Data()));
+  for (Int_t ivar=0; ivar<(Float_t)fTreeVariableName.size(); ivar++) fRecoTrackTree->Branch(fTreeVariableName[ivar].Data(),&fRecoTrackTreeVariable[ivar],Form("%s/f",fTreeVariableName[ivar].Data()));
 
   return;
 }
@@ -847,6 +847,16 @@ void AliAnalysisTaskSEXiccTopKpipi::FillRecoTrackTree(){
             pdgCodeMother = (fMcEvent->Particle(lblMother))->GetPdgCode();
             genPtMoth = (fMcEvent->Particle(lblMother))->Pt();
         }
+
+        const TBits &hits = esdtr->GetTPCClusterMap();
+        //TBits &fakes = esdtr->GetTPCSharedMap(); // here we store fakes, but at the moment they are not set
+        Int_t nhits=0;
+        //printf(" Hits: ");
+        for (int ilr=0;ilr<fITS->GetNActiveLayers();ilr++) {
+            //printf("%c", hits.TestBitNumber(ilr) ? '+':'-');
+            if(hits.TestBitNumber(ilr))nhits++;
+        }
+        
         //Fill histograms
         fRecoTrackTreeVariable[0] = recoPt;
         fRecoTrackTreeVariable[1] = recoPhi;
