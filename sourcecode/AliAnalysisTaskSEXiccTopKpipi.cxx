@@ -376,8 +376,8 @@ fNcounters->GetXaxis()->SetBinLabel(8,"Reco #Omega^{c}");
     PostData(1,fNentries);
     PostData(2,fOutput);
     PostData(3,fGenXiccTree);
-    PostData(3,fRecoXiccTree);
-    PostData(3,fRecoTrackTree);
+    PostData(4,fRecoXiccTree);
+    PostData(5,fRecoTrackTree);
 
     return;
 }
@@ -664,6 +664,7 @@ void AliAnalysisTaskSEXiccTopKpipi::FillGenXiccTree(TParticle* mcXicc){
     }
   }
 
+  for(int i=0; i<44; i++) fGenXiccTreeVariable[i] = -9999;
   fGenXiccTreeVariable[0] = mcXicc->Px();
   fGenXiccTreeVariable[1] = mcXicc->Py();
   fGenXiccTreeVariable[2] = mcXicc->Pz();
@@ -711,7 +712,7 @@ void AliAnalysisTaskSEXiccTopKpipi::FillGenXiccTree(TParticle* mcXicc){
   fGenXiccTreeVariable[43] = mckaon->R();
 
 
-  fRecoXiccTree->Fill();
+  fGenXiccTree->Fill();
 }
 
 
@@ -759,6 +760,7 @@ void AliAnalysisTaskSEXiccTopKpipi::FillRecoXiccTree(AliESDtrack* spion, AliESDt
   TParticle* mcXicc = fMcEvent->Particle(mcXic->GetFirstMother());
   if(TMath::Abs(mcXicc->GetPdgCode())!=4422) return;
 
+  for(int i=0; i<44; i++) fRecoXiccTreeVariable[i] = -9999;
   fRecoXiccTreeVariable[0] = mcXicc->Px();
   fRecoXiccTreeVariable[1] = mcXicc->Py();
   fRecoXiccTreeVariable[2] = mcXicc->Pz();
@@ -806,7 +808,7 @@ void AliAnalysisTaskSEXiccTopKpipi::FillRecoXiccTree(AliESDtrack* spion, AliESDt
   fRecoXiccTreeVariable[43] = mckaon->R();
 
 
-  fRecoXiccTree->Fill();
+  fRecoXiccTreeVariable->Fill();
 }
 
 void AliAnalysisTaskSEXiccTopKpipi::DefineRecoTrackTree(){
@@ -856,7 +858,8 @@ void AliAnalysisTaskSEXiccTopKpipi::FillRecoTrackTree(){
             //printf("%c", hits.TestBitNumber(ilr) ? '+':'-');
             if(hits.TestBitNumber(ilr))nhits++;
         }
-        
+
+        for(int i=0; i<14; i++) fRecoTrackTreeVariable[i] = -9999;
         //Fill histograms
         fRecoTrackTreeVariable[0] = recoPt;
         fRecoTrackTreeVariable[1] = recoPhi;
