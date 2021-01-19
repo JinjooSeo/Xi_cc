@@ -58,8 +58,8 @@ AliAnalysisTaskSEXiccTopKpipi *AddTaskXiccTopKpipi()
     mgr->ConnectOutput(task,1,coutputEntries);
     mgr->ConnectOutput(task,2,coutputListGen);
     mgr->ConnectOutput(task,3,coutputTreeCutVarGen);
-    mgr->ConnectOutput(task,3,coutputTreeCutVarReco);
-    mgr->ConnectOutput(task,3,coutputTreeCutVarRecoTrack);
+    mgr->ConnectOutput(task,4,coutputTreeCutVarReco);
+    mgr->ConnectOutput(task,5,coutputTreeCutVarRecoTrack);
 
     return task;
 
