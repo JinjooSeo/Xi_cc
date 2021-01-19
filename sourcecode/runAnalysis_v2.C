@@ -336,7 +336,7 @@ void runAnalysis_v2()
         //mgr->StartAnalysis("local", chainAOD,25,226);//, 100);//,2,103);//, 10);//,1,0);//,2,0);
         TStopwatch timer;
         timer.Start();
-        mgr->StartAnalysis("local", chainAOD,10000);//, 100);//,2,103);//, 10);//,1,0);//,2,0);
+        mgr->StartAnalysis("local", chainAOD);//, 100);//,2,103);//, 10);//,1,0);//,2,0);
         timer.Stop();
         printf("RealTime =%7.3f s, CpuTime =%7.3f s\n",timer.RealTime(),timer.CpuTime());
 

@@ -337,10 +337,10 @@ fNcounters->GetXaxis()->SetBinLabel(8,"Reco #Omega^{c}");
     fOutput->SetOwner();
     fOutput->SetName("listOutput");
 
-    fProtonTrackArray = new TArrayI(3500);
-    fKaonTrackArray = new TArrayI(3500);
-    fPionTrackArray = new TArrayI(3500);
-    fSoftPionTrackArray = new TArrayI(3500);
+    fProtonTrackArray = new TArrayI(100);
+    fKaonTrackArray = new TArrayI(100);
+    fPionTrackArray = new TArrayI(100);
+    fSoftPionTrackArray = new TArrayI(100);
 
 	fProtonCuts = 1;
 	fKaonCuts = 2;
@@ -454,7 +454,7 @@ void AliAnalysisTaskSEXiccTopKpipi::MakeCandidates(){
     for(int j=0; j<nKaon; j++){ //for(int j=0; j<nKaon; j++){
       AliESDtrack* fKaonTrack = (AliESDtrack*)fEvent->GetTrack(fKaonTrackArray->At(j));
 
-      if(fKaonTrack->Charge()*fProtonTrack->Charge()>=0) continue;
+      if(fKaonTrack->Charge()*fProtonTrack->Charge()<=0) continue;
       if(fKaonTrack->GetID()==fProtonTrack->GetID()) continue;
 
       for(int k=0; k<nPion; k++){ //for(int k=0; k<nPion; k++){
@@ -518,7 +518,7 @@ void AliAnalysisTaskSEXiccTopKpipi::PrepareTracks(){
     }
      //AddAt (Int_t c, Int_t i) : Add Int_t c at position i. Check for out of bounds.
   }
-cout << "proton kaon pion spion : " << nProton << "  " << nKaon << "  " << nPion << "  "<< nSoftPion << endl;
+//cout << "proton kaon pion spion : " << nProton << "  " << nKaon << "  " << nPion << "  "<< nSoftPion << endl;
 
   return;
 }
@@ -652,19 +652,25 @@ void AliAnalysisTaskSEXiccTopKpipi::FillGenXiccTree(TParticle* mcXicc){
   for(int i=0; i<mcXicc->GetNDaughters(); i++){
     TParticle* mcpart = (TParticle*) fMcEvent->Particle(mcXicc->GetDaughter(i));
     if(!mcpart) return;
-    if(mcpart->GetPdgCode()==211) mcspion = mcpart;
-    if(mcpart->GetPdgCode()==4232){
+		//cout << mcpart->GetPdgCode() << endl;
+    if(TMath::Abs(mcpart->GetPdgCode())==211) mcspion = mcpart;
+    if(TMath::Abs(mcpart->GetPdgCode())==4232){
       mcXic = mcpart;
-      for(int j=0; j<mcXic->GetNDaughters(); j++){
-        TParticle* mcpart2 = (TParticle*) fMcEvent->Particle(mcXic->GetDaughter(j));
+      for(int j=0; j<3; j++){
+        TParticle* mcpart2 = (TParticle*) fMcEvent->Particle(mcXic->GetDaughter(0)+j);
 		if(!mcpart2) return;
-        if(mcpart2->GetPdgCode()==2212) mcproton = mcpart2;
-        if(mcpart2->GetPdgCode()==321) mckaon = mcpart2;
-        if(mcpart2->GetPdgCode()==211) mcpion = mcpart2;
+        if(TMath::Abs(mcpart2->GetPdgCode())==2212) mcproton = mcpart2;
+        if(TMath::Abs(mcpart2->GetPdgCode())==321) mckaon = mcpart2;
+        if(TMath::Abs(mcpart2->GetPdgCode())==211) mcpion = mcpart2;
       }
     }
   }
-
+  if(!mcXic) return;
+  if(!mcspion) return;
+  if(!mcproton) return;
+  if(!mckaon) return;
+  if(!mcpion) return;
+  
   for(int i=0; i<52; i++) fGenXiccTreeVariable[i] = -9999;
   fGenXiccTreeVariable[0] = mcXicc->Px();
   fGenXiccTreeVariable[1] = mcXicc->Py();
@@ -756,12 +762,14 @@ void AliAnalysisTaskSEXiccTopKpipi::FillRecoXiccTree(AliESDtrack* spion, AliESDt
   if(TMath::Abs(mcproton->GetPdgCode())!=2212) return;
   if(TMath::Abs(mckaon->GetPdgCode())!=321) return;
   if(TMath::Abs(mcpion->GetPdgCode())!=211) return;
-
-  if(mcproton->GetFirstMother() != mckaon->GetFirstMother()) return;
-  if(mcproton->GetFirstMother() != mcpion->GetFirstMother()) return;
+//cout << mcproton->GetFirstMother() << " 11 " <<  mckaon->GetFirstMother()<<endl;
+  if(!(mcproton->GetFirstMother() == mckaon->GetFirstMother())) return;
+if(!(mcproton->GetFirstMother() == mcpion->GetFirstMother())) return;
   if(mcproton->GetFirstMother()==-1) return;
-
   TParticle* mcXic = (TParticle*) fMcEvent->Particle(mcproton->GetFirstMother());
+//TParticle* mcXic2 = (TParticle*) fMcEvent->Particle(mckaon->GetFirstMother());
+	//	cout << mcXic->GetPdgCode() << endl;
+	//	cout << mcXic2->GetPdgCode() << endl;
   if(TMath::Abs(mcXic->GetPdgCode())!=4232) return;
   if(mcXic->GetFirstMother() != mcspion->GetFirstMother()) return;
   if(mcXic->GetFirstMother()==-1) return;
